@@ -1,0 +1,20 @@
+/* Global styles for full-page map support */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+/* Ensure router-outlet doesn't add extra spacing */
+router-outlet {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
