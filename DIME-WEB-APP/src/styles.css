@@ -1,1 +1,21 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global typography and background */
+html, body {
+  font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
+  font-weight: 400;
+  background-color: #F80516;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+}
+
+button, input, select, textarea {
+  font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
+  font-weight: 400;
+}
+
+/* Ensure headings default to normal unless overridden */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
+  font-weight: 700;
+}
