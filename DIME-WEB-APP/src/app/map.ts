@@ -547,7 +547,7 @@ export class MapComponent implements AfterViewInit {
     
     infoWindow.open(this.map);
   }
-
+  
   /**
    * Count markers by category for filter display
    */
