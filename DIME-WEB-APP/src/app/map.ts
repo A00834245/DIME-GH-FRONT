@@ -1,6 +1,8 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../environments/environment';
+import { DatasetService } from './services/dataset.service';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
 // Declare google as any to avoid TypeScript errors
 declare var google: any;
@@ -19,6 +21,53 @@ declare var google: any;
           class="search-input"
         />
       </div>
+      
+      <!-- Category Filter Boxes -->
+      <div class="category-filters">
+        <div 
+          class="filter-box parking" 
+          [class.active]="visibleCategories.has('Estacionamiento')"
+          (click)="toggleCategory('Estacionamiento')">
+          <div class="filter-icon">
+            <svg width="20" height="25" viewBox="0 0 20 25" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 10C20 15.5237 11.4286 24.5 10 24.5C8.57143 24.5 0 15.5237 0 10C0 4.47715 4.47715 0 10 0C15.5228 0 20 4.47715 20 10Z" fill="#007FFF"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M20 10C20 15.5237 11.4286 24.5 10 24.5C8.57143 24.5 0 15.5237 0 10C0 4.47715 4.47715 0 10 0C15.5228 0 20 4.47715 20 10ZM6.8 15H13.4V13.27H8.4V10.07H12.6V9.02H8.4V6.73H13.35V5H6.8V15Z" fill="#007FFF"/>
+              <path d="M6.8 15H13.4V13.27H8.4V10.07H12.6V9.02H8.4V6.73H13.35V5H6.8V15Z" fill="white"/>
+            </svg>
+          </div>
+          <span class="filter-label">Estacionamientos</span>
+          <span class="filter-count">({{getCategoryCount('Estacionamiento')}})</span>
+        </div>
+        
+        <div 
+          class="filter-box cedi" 
+          [class.active]="visibleCategories.has('CEDI')"
+          (click)="toggleCategory('CEDI')">
+          <div class="filter-icon">
+            <svg width="20" height="25" viewBox="0 0 20 25" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 10C20 15.5237 11.4286 24.5 10 24.5C8.57143 24.5 0 15.5237 0 10C0 4.47715 4.47715 0 10 0C15.5228 0 20 4.47715 20 10Z" fill="#FF8C00"/>
+              <path d="M8.097 5L4.20381 6.904L5.57732 8.27886L9.47048 6.375L8.097 5ZM11.6823 5L10.309 6.375L14.2021 8.27886L15.5757 6.904L11.6823 5ZM9.88571 6.67617L9.6289 6.78214V10.2261L9.88571 10.3321L10.1426 10.2261V6.78214L9.88571 6.67617ZM5.59058 8.80268L4.165 10.6686L7.69166 12.5584L9.47047 10.7798L5.59058 8.80268ZM14.1808 8.2027L9.88571 10.7798L11.6646 12.5584L15.1912 10.6686L14.1808 8.80268ZM9.6289 11.2551L7.92396 13.2598L5.78039 12.0491V13.2761L9.6289 15V11.2551ZM10.1426 11.2551V15L13.9911 13.2761V12.0491L11.8476 13.2598L10.1426 11.2551Z" fill="white"/>
+            </svg>
+          </div>
+          <span class="filter-label">CEDIs</span>
+          <span class="filter-count">({{getCategoryCount('CEDI')}})</span>
+        </div>
+        
+        <div 
+          class="filter-box client" 
+          [class.active]="visibleCategories.has('Cliente')"
+          (click)="toggleCategory('Cliente')">
+          <div class="filter-icon">
+            <svg width="20" height="25" viewBox="0 0 20 25" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 10C20 15.5237 11.4286 24.5 10 24.5C8.57143 24.5 0 15.5237 0 10C0 4.47715 4.47715 0 10 0C15.5228 0 20 4.47715 20 10Z" fill="#ED1B24"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M14.3402 5H6.07235L5 7.97563V8.86293C5 9.27514 5.16027 9.60253 5.42062 9.79606V15H15.0361V9.79606C15.2965 9.60253 15.4567 9.27514 15.4567 8.86293V7.97563L14.3402 5ZM14.1361 10.4987C14.0301 10.5205 13.9205 10.5314 13.8083 10.5314C13.3315 10.5314 12.9095 10.2495 12.6458 9.79606C12.3821 10.2495 11.9601 10.5314 11.4833 10.5314C11.0065 10.5314 10.5845 10.2495 10.3208 9.79606C10.0571 10.2495 9.63511 10.5314 9.15833 10.5314C8.68155 10.5314 8.25953 10.2495 7.99583 9.79606C7.73214 10.2495 7.31012 10.5314 6.83333 10.5314C6.72115 10.5314 6.61151 10.5205 6.50556 10.4987V13.7456H8.47222V11.5457H11.5278V13.7456H14.1361V10.4987ZM11.0972 12.1913V13.7456H9.09722V12.1913H11.0972ZM14.7639 8.86293V8.41993L14.5758 7.58934L13.8689 5.82457H6.67639L5.96944 7.58934L5.78139 8.41993V8.86293C5.78139 9.35691 6.16684 9.75414 6.66667 9.75414C7.16649 9.75414 7.55194 9.35691 7.55194 8.86293V8.41993H8.43056V8.86293C8.43056 9.35691 8.81601 9.75414 9.31583 9.75414C9.81566 9.75414 10.2011 9.35691 10.2011 8.86293V8.41993H11.0797V8.86293C11.0797 9.35691 11.4652 9.75414 11.965 9.75414C12.4648 9.75414 12.8503 9.35691 12.8503 8.86293V8.41993H13.7289V8.86293C13.7289 9.35691 14.1143 9.75414 14.6142 9.75414C15.114 9.75414 15.4994 9.35691 15.4994 8.86293Z" fill="white"/>
+            </svg>
+          </div>
+          <span class="filter-label">Clientes</span>
+          <span class="filter-count">({{getCategoryCount('Cliente')}})</span>
+        </div>
+      </div>
+      
       <div id="map" #mapElement class="map"></div>
     </div>
   `,
@@ -31,14 +80,21 @@ export class MapComponent implements AfterViewInit {
   private map: any;
   private autocomplete: any;
   private currentInfoWindow: any;
-  private advancedMarkers: any[] = [];
-  private AdvancedMarkerElement: any;
+  private markers: any[] = [];
   private Geocoder: any;
   private Autocomplete: any;
-  private datasetLayer: any;
-  private datasetLayerSetup: boolean = false;
+  private dataLoaded: boolean = false;
+  private svgCache = new Map<string, string>();
+  private markerClusterer: MarkerClusterer | null = null;
+  private allFeatures: any[] = [];
+  private markersByCategory = new Map<string, any[]>();
+  public visibleCategories = new Set<string>(['Estacionamiento', 'CEDI', 'Cliente']);
+  private categoryCounts = new Map<string, number>();
   
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private datasetService: DatasetService
+  ) {}
   
   ngAfterViewInit(): void {
     // Only initialize map in browser environment
@@ -67,8 +123,7 @@ export class MapComponent implements AfterViewInit {
         return;
       }
 
-      // Create script element - we'll import libraries dynamically
-      // Using v=beta for latest features
+      // Create script element
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&v=beta`;
       script.async = true;
@@ -76,10 +131,6 @@ export class MapComponent implements AfterViewInit {
 
       script.onload = () => {
         console.log('Google Maps API loaded successfully');
-        console.log('Checking API availability:');
-        console.log('google.maps available:', !!google.maps);
-        console.log('google.maps.marker available:', !!google.maps.marker);
-        console.log('google.maps.marker.AdvancedMarkerElement available:', !!google.maps.marker?.AdvancedMarkerElement);
         resolve();
       };
 
@@ -93,35 +144,42 @@ export class MapComponent implements AfterViewInit {
   }
 
   private async initializeMap(): Promise<void> {
-    console.log('Initializing Google Map with modern library imports...');
+    console.log('Initializing Google Map...');
     
     try {
       // Import required libraries
       console.log('Importing Google Maps libraries...');
       const { Map } = await google.maps.importLibrary('maps') as any;
-      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker') as any;
       const { Geocoder } = await google.maps.importLibrary('geocoding') as any;
       const { Autocomplete } = await google.maps.importLibrary('places') as any;
       
       console.log('Libraries imported successfully');
-      console.log('AdvancedMarkerElement available:', !!AdvancedMarkerElement);
       
       // Store library references for later use
-      this.AdvancedMarkerElement = AdvancedMarkerElement;
       this.Geocoder = Geocoder;
       this.Autocomplete = Autocomplete;
       
-      // Initialize the map with custom Map ID
+      // Initialize the map with performance optimizations
       this.map = new Map(this.mapElement.nativeElement, {
         center: { lat: 25.6866, lng: -100.3161 }, // Monterrey, Mexico
-        zoom: 10, // Slightly zoomed out to see more area
-        mapId: environment.googleMapId, // Your custom Map ID with dataset
+        zoom: 10, // Good zoom level for viewing markers
         zoomControl: true,
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
-        fullscreenControl: true
+        fullscreenControl: true,
+        gestureHandling: 'greedy',
+        disableDefaultUI: false,
+        restriction: {
+          // Restrict to Mexico area to reduce map data
+          latLngBounds: {
+            north: 32.0,
+            south: 14.5,
+            west: -118.0,
+            east: -86.7
+          }
+        }
       });
       
       console.log('Map initialized successfully');
@@ -133,34 +191,19 @@ export class MapComponent implements AfterViewInit {
     
     // Wait for map to be fully loaded
     this.map.addListener('tilesloaded', () => {
-      console.log('Map tiles loaded - now loading dataset feature layer');
-      console.log('Map ID being used:', this.map.getMapId());
+      console.log('Map tiles loaded - now loading markers from backend');
       console.log('Current zoom level:', this.map.getZoom());
       console.log('Current center:', this.map.getCenter()?.toString());
       
-      // Load the dataset feature layer
-      this.loadDatasetFeatureLayer();
-    });
-    
-    // Add zoom change listener to help debug visibility
-    this.map.addListener('zoom_changed', () => {
-      console.log('Zoom changed to:', this.map.getZoom());
-    });
-    
-    // Add general map click listener for debugging
-    this.map.addListener('click', (event: any) => {
-      console.log('=== GENERAL MAP CLICK ===');
-      console.log('Map clicked at:', event.latLng.toString());
-      console.log('Click event:', event);
-      console.log('=== END GENERAL MAP CLICK ===');
+      // Load colored markers from backend (simplified approach)
+      this.loadDataFromBackend();
     });
     
     // Initialize search functionality
     this.initializeSearch();
     
-    console.log('Map initialized with Map ID for data-driven styling');
+    console.log('Map initialized with backend data approach');
   }
-
 
   private initializeSearch(): void {
     // Create autocomplete for search input
@@ -186,268 +229,260 @@ export class MapComponent implements AfterViewInit {
     console.log('Search functionality initialized with Places API');
   }
   
-  private loadDatasetFeatureLayer(): void {
+  private loadDataFromBackend(): void {
     // Prevent multiple setups
-    if (this.datasetLayerSetup) {
-      console.log('Dataset layer already setup, skipping...');
+    if (this.dataLoaded) {
+      console.log('Backend data already loaded, skipping...');
       return;
     }
+    
+    console.log('Loading data directly from backend (no dataset layer needed)...');
+    
+    // Load colored markers from backend proxy - this is our main approach now
+    this.loadColoredMarkersFromBackend();
+    
+    // Mark as setup to prevent duplicates
+    this.dataLoaded = true;
+  }
+
+  /**
+   * Load stable colored markers from backend data (NO WEBGL, NO DATASET!)
+   */
+  private async loadColoredMarkersFromBackend(): Promise<void> {
+    console.log('Loading STABLE colored markers from backend data...');
     
     try {
-      console.log('Loading dataset feature layer...');
+      const geojson = await this.datasetService.fetchDatasetFromBackend();
       
-      // Your dataset ID from environment
-      const datasetId = environment.googleDatasetId;
-      
-      // Get the dataset feature layer
-      console.log('Attempting to get dataset feature layer for ID:', datasetId);
-      const datasetLayer = this.map.getDatasetFeatureLayer(datasetId);
-      console.log('Dataset layer result:', datasetLayer);
-      console.log('Dataset layer type:', typeof datasetLayer);
-      
-      if (datasetLayer) {
-        console.log('Dataset feature layer found, applying style...');
-        
-        // Instead of styling, we'll create AdvancedMarkerElements for each feature
-        console.log('Setting up AdvancedMarkerElement approach with custom SVG markers...');
-        
-        // Apply category-based styling to dataset features
-        datasetLayer.style = (params: any) => {
-          const feature = params.feature;
-          if (!feature) {
-            return {
-              strokeColor: '#810FCB',
-              strokeOpacity: 1.0,
-              strokeWeight: 2,
-              fillColor: '#810FCB',
-              fillOpacity: 0.7,
-            };
-          }
-          
-          // Get category from feature
-          let category = 'Estacionamiento';
-          try {
-            if (feature.getProperty) {
-              category = feature.getProperty('Category') || 'Estacionamiento';
-            }
-          } catch (e) {
-            // Use default
-          }
-          
-          try {
-            if (feature.datasetAttributes && feature.datasetAttributes.Category) {
-              category = feature.datasetAttributes.Category;
-            }
-          } catch (e) {
-            // Use default
-          }
-          
-          // Get category colors
-          const categoryInfo = this.getCategoryInfo(category);
-          
-          return {
-            strokeColor: categoryInfo.primaryColor,
-            strokeOpacity: 1.0,
-            strokeWeight: 2,
-            fillColor: categoryInfo.primaryColor,
-            fillOpacity: 0.7,
-          };
-        };
-        
-        // All markers now use simple colored styling
-        
-        // Keep the click listener for info windows only
-        datasetLayer.addListener('click', (event: any) => {
-          console.log('Dataset feature clicked - showing info window');
-          this.handleDatasetFeatureClick(event);
-        });
-        
-        console.log('Dataset feature layer setup complete');
-        console.log('Dataset ID:', datasetId);
-        console.log(`Style ID: ${environment.googleStyleId}`);
-        
-        // Mark as setup to prevent duplicates
-        this.datasetLayerSetup = true;
-      } else {
-        console.error('Dataset feature layer not found for ID:', datasetId);
-        console.error('Please verify that:');
-        console.error('1. Dataset is properly imported in Google Cloud Console');
-        console.error(`2. Dataset is associated with Map ID: ${environment.googleMapId}`);
-        console.error('3. Dataset has the correct permissions');
+      if (!geojson || !geojson.features) {
+        console.error('Invalid data format - no features found');
+        return;
       }
+      
+      console.log(`Creating ${geojson.features.length} optimized markers from backend...`);
+      
+      const pointFeatures = geojson.features.filter((f: any) => f.geometry?.type === 'Point');
+      console.log(`Processing ${pointFeatures.length} markers with filtering support`);
+      
+      // Store all features for filtering
+      this.allFeatures = pointFeatures;
+      
+      // Count markers by category
+      this.countMarkersByCategory();
+      
+      // Create all markers initially
+      for (const feature of pointFeatures) {
+        this.createColoredMarkerFromFeature(feature);
+      }
+      
+      console.log(`Successfully created ${this.markers.length} optimized pin markers! 🎯`);
+      console.log('Features: SVG caching, marker clustering, category filtering!');
+      
+      // Setup marker clustering for better performance
+      this.setupMarkerClustering();
+      
     } catch (error) {
-      console.error('Error loading dataset feature layer:', error);
-      console.error('This might be because:');
-      console.error('- Dataset is not properly configured');
-      console.error('- Map ID does not have access to the dataset');
-      console.error('- API version does not support dataset feature layers');
-    }
-  }
-  private async handleDatasetFeatureClick(event: any): Promise<void> {
-    console.log('=== DATASET FEATURE CLICK DEBUG ===');
-    console.log('Full event object:', event);
-    console.log('Event type:', typeof event);
-    console.log('Event keys:', Object.keys(event));
-    console.log('Has features?', event.features ? 'YES' : 'NO');
-    console.log('Features array:', event.features);
-    console.log('Features length:', event.features?.length);
-    
-    if (event.features && event.features.length > 0) {
-      console.log('First feature:', event.features[0]);
-      console.log('First feature keys:', Object.keys(event.features[0] || {}));
-      console.log('Feature properties:', event.features[0]?.properties);
-      console.log('Feature geometry:', event.features[0]?.geometry);
-    }
-    
-    console.log('Event latLng:', event.latLng);
-    console.log('Event position:', event.latLng?.toString());
-    console.log('=== END CLICK DEBUG ===');
-    
-    // Extract feature properties from the GeoJSON
-    let feature = null;
-    let properties = null;
-    
-    // Try to find a feature with properties
-    if (event.features && event.features.length > 0) {
-      for (let i = 0; i < event.features.length; i++) {
-        const currentFeature = event.features[i];
-        console.log(`=== FEATURE ${i} ANALYSIS ===`);
-        console.log('Full feature object:', currentFeature);
-        console.log('Feature type:', typeof currentFeature);
-        console.log('Feature keys:', Object.keys(currentFeature || {}));
-        console.log('Feature properties:', currentFeature?.properties);
-        
-        // Try different ways to access properties
-        console.log('Direct properties:', currentFeature?.properties);
-        console.log('getProperty method available?', typeof currentFeature?.getProperty === 'function');
-        console.log('datasetAttributes available?', currentFeature?.datasetAttributes ? 'YES' : 'NO');
-        console.log('datasetAttributes content:', currentFeature?.datasetAttributes);
-        
-        // Check for Google Maps Dataset attributes (most likely scenario)
-        if (currentFeature?.datasetAttributes && Object.keys(currentFeature.datasetAttributes).length > 0) {
-          console.log('Using datasetAttributes for properties:');
-          console.log('Dataset attributes:', currentFeature.datasetAttributes);
-          
-          feature = currentFeature;
-          properties = currentFeature.datasetAttributes;
-          console.log(`Using feature ${i} with dataset attributes:`, properties);
-          break;
-        }
-        // Try getProperty method (alternative approach)
-        else if (typeof currentFeature?.getProperty === 'function') {
-          console.log('Using getProperty method to access data:');
-          
-          const possibleProps = ['Category', 'Name', 'Description', 'Hours', 'Phone Number', 'Person Responsable', 'category', 'name', 'description'];
-          const extractedProps: any = {};
-          
-          possibleProps.forEach(prop => {
-            try {
-              const value = currentFeature.getProperty(prop);
-              if (value !== null && value !== undefined) {
-                extractedProps[prop] = value;
-                console.log(`Found property '${prop}':`, value);
-              }
-            } catch (e) {
-              console.log(`Could not get property '${prop}':`, e);
-            }
-          });
-          
-          if (Object.keys(extractedProps).length > 0) {
-            feature = currentFeature;
-            properties = extractedProps;
-            console.log(`Using feature ${i} with extracted properties:`, properties);
-            break;
-          }
-        }
-        // Standard GeoJSON properties (fallback)
-        else if (currentFeature && currentFeature.properties && Object.keys(currentFeature.properties).length > 0) {
-          // Standard GeoJSON properties
-          feature = currentFeature;
-          properties = currentFeature.properties;
-          console.log(`Using feature ${i} with standard properties:`, properties);
-          break;
-        }
-        
-        console.log(`=== END FEATURE ${i} ANALYSIS ===`);
-      }
-    }
-    
-    if (!feature || !properties) {
-      console.error('No feature with valid properties found in click event');
-      console.error('Available features:', event.features);
+      console.error('Error loading markers from backend:', error);
       
-      // Show a fallback info window with available information
-      const fallbackInfoWindow = new google.maps.InfoWindow({
+      const errorInfoWindow = new google.maps.InfoWindow({
         content: `
-          <div style="padding: 15px; max-width: 250px; font-family: Arial, sans-serif;">
-            <h3 style="margin: 0 0 10px 0; color: #333;">Location Information</h3>
-            <p><strong>Position:</strong> ${event.latLng?.toString() || 'Unknown'}</p>
-            <p><strong>Features Found:</strong> ${event.features?.length || 0}</p>
-            <p style="color: #666; font-size: 14px;">No detailed properties available for this location.</p>
+          <div style="padding: 15px; color: #dc3545; background: #f8d7da; border-radius: 8px; border: 1px solid #f5c6cb;">
+            <h3 style="margin-top: 0; color: #721c24;">❌ Backend Connection Failed</h3>
+            <p style="margin-bottom: 8px;">Could not load markers from backend server.</p>
+            <p style="margin-bottom: 8px;"><strong>Please ensure your backend server is running:</strong></p>
+            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; color: #333;">http://localhost:3000</code>
+            <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" 
+                    style="float: right; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-top: 8px;">Close</button>
           </div>
         `,
-        position: event.latLng
+        position: this.map.getCenter()
       });
       
-      // Close any existing info window
-      if (this.currentInfoWindow) {
-        this.currentInfoWindow.close();
+      errorInfoWindow.open(this.map);
+      
+      setTimeout(() => {
+        errorInfoWindow.close();
+      }, 15000);
+    }
+  }
+  
+  /**
+   * Create pin/droplet shaped marker with SVG caching
+   */
+  private createColoredMarkerFromFeature(feature: any): void {
+    try {
+      const [lng, lat] = feature.geometry.coordinates;
+      const properties = feature.properties || {};
+      
+      // Get category and color
+      const category = properties.Category || properties.category || 'Estacionamiento';
+      const color = this.getMarkerColor(category);
+      
+      // Get cached SVG with category-specific design
+      const svgIcon = this.getCachedPinSVG(color, category);
+      
+      // Different dimensions and anchor points for different marker types
+      const markerConfig = (category === 'Estacionamiento' || category === 'CEDI' || category === 'Cliente')
+        ? {
+            size: new google.maps.Size(35, 43),          // Custom markers: 35x43 (custom pin shape)
+            anchor: new google.maps.Point(17.5, 43)      // Bottom center of custom pin
+          }
+        : {
+            size: new google.maps.Size(35, 35),          // Unknown: 35x35 (standard pin)
+            anchor: new google.maps.Point(17.5, 32)      // Bottom center of standard pin
+          };
+      
+      // Create marker
+      const marker = new google.maps.Marker({
+        position: { lat, lng },
+        map: this.map,
+        title: properties.Name || properties.name || category,
+        icon: {
+          url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgIcon)}`,
+          scaledSize: markerConfig.size,
+          anchor: markerConfig.anchor
+        }
+      });
+      
+      // Add click listener for info window
+      marker.addListener('click', () => {
+        this.showMarkerInfoWindow(properties, { lat, lng });
+      });
+      
+      // Store marker reference and organize by category
+      this.markers.push(marker);
+      
+      // Organize markers by category for filtering
+      if (!this.markersByCategory.has(category)) {
+        this.markersByCategory.set(category, []);
       }
-      this.currentInfoWindow = fallbackInfoWindow;
-      fallbackInfoWindow.open(this.map);
-      return;
+      this.markersByCategory.get(category)!.push(marker);
+      
+    } catch (error) {
+      console.error('Error creating marker:', error);
+    }
+  }
+  
+  /**
+   * Get cached SVG for marker based on category and color (35px)
+   */
+  private getCachedPinSVG(color: string, category?: string): string {
+    const cacheKey = `${color}-${category || 'default'}`;
+    
+    if (!this.svgCache.has(cacheKey)) {
+      let svg = '';
+      
+      // Custom parking marker with "P" design (pin shape)
+      if (category === 'Estacionamiento') {
+        svg = `
+          <svg width="35" height="43" viewBox="0 0 35 43" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M35 17.5C35 27.1652 20.125 42.875 17.5 42.875C14.875 42.875 0 27.1652 0 17.5C0 7.83477 7.83477 0 17.5 0C27.1652 0 35 7.83477 35 17.5ZM11.9 26.25H23.45V23.22H15.18V18.75H22.07V15.79H15.18V11.78H23.35V8.75H11.9V26.25Z" fill="${color}"/>
+            <path d="M11.9 26.25H23.45V23.22H15.18V18.75H22.07V15.79H15.18V11.78H23.35V8.75H11.9V26.25Z" fill="white"/>
+          </svg>
+        `;
+      } else if (category === 'CEDI') {
+        // Custom CEDI marker with warehouse/distribution icon
+        svg = `
+          <svg width="35" height="43" viewBox="0 0 35 43" xmlns="http://www.w3.org/2000/svg">
+            <path d="M35 17.5C35 27.1652 20.125 42.875 17.5 42.875C14.875 42.875 0 27.1652 0 17.5C0 7.83477 7.83477 0 17.5 0C27.1652 0 35 7.83477 35 17.5Z" fill="${color}"/>
+            <path d="M14.1711 8.75L7.35668 12.0828L9.81032 14.4869L16.6247 11.1541L14.1711 8.75ZM20.3938 8.75L17.9402 11.1541L24.7546 14.4869L27.208 12.0828L20.3938 8.75ZM17.28 11.6883L16.8507 11.8875V17.8953L17.28 18.0943L17.7096 17.8953V11.8875L17.28 11.6883ZM9.83573 15.4047L7.2915 18.6402L13.4624 21.9732L16.6247 18.8115L9.83573 15.4047ZM24.7397 15.4047L17.9402 18.8115L21.1027 21.9732L27.2736 18.6402L24.7397 15.4047ZM16.8507 19.6953L13.5893 22.9568L10.1118 21.086V22.9751L16.8507 26.25V19.6953ZM17.7096 19.6953V26.25L24.4485 22.9751V21.086L20.971 22.9568L17.7096 19.6953Z" fill="white"/>
+          </svg>
+        `;
+      } else if (category === 'Cliente') {
+        // Custom Cliente marker with building/office icon
+        svg = `
+          <svg width="35" height="43" viewBox="0 0 35 43" xmlns="http://www.w3.org/2000/svg">
+            <path d="M35 17.5C35 27.1652 20.125 42.875 17.5 42.875C14.875 42.875 0 27.1652 0 17.5C0 7.83477 7.83477 0 17.5 0C27.1652 0 35 7.83477 35 17.5Z" fill="${color}"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M25.0948 8.75H10.6678L8.75 13.9513V15.5101C8.75 16.3188 9.0354 17.0444 9.486 17.5844V26.25H26.2583V17.5844C26.7089 17.0444 26.9943 16.3188 26.9943 15.5101V13.9513L25.0948 8.75ZM24.7333 18.4975C24.5527 18.5349 24.3644 18.5549 24.1708 18.5549C23.3296 18.5549 22.5672 18.1741 22.0417 17.5844C21.5162 18.1741 20.7538 18.5549 19.9125 18.5549C19.0713 18.5549 18.3089 18.1741 17.7833 17.5844C17.2578 18.1741 16.4954 18.5549 15.6542 18.5549C14.8129 18.5549 14.0505 18.1741 13.525 17.5844C12.9995 18.1741 12.2371 18.5549 11.3958 18.5549C11.202 18.5549 11.0138 18.5349 10.8333 18.4975V24.1598H14.8333V20.1141H20.1667V24.1598H24.7333V18.4975ZM19.4167 21.6685V24.1598H16.0833V21.6685H19.4167ZM25.4583 15.5101V14.7598L25.1273 13.3163L24.0206 10.2899H11.7044L10.5977 13.3163L10.2667 14.7598V15.5101C10.2667 16.3746 10.8798 17.0728 11.3958 17.0728C11.9118 17.0728 12.525 16.3746 12.525 15.5101V14.7598H14.0708V15.5101C14.0708 16.3746 14.684 17.0728 15.2 17.0728C15.716 17.0728 16.3292 16.3746 16.3292 15.5101V14.7598H17.875V15.5101C17.875 16.3746 18.4882 17.0728 19.0042 17.0728C19.5202 17.0728 20.1333 16.3746 20.1333 15.5101V14.7598H21.6792V15.5101C21.6792 16.3746 22.2923 17.0728 22.8083 17.0728C23.3243 17.0728 23.9375 16.3746 23.9375 15.5101Z" fill="white"/>
+          </svg>
+        `;
+      } else {
+        // Pin/droplet style for other categories (Unknown)
+        svg = `
+          <svg width="35" height="35" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.5 3.5 C24.5 3.5, 30 9, 30 16 C30 23, 17.5 31.5, 17.5 31.5 S5 23, 5 16 C5 9, 10.5 3.5, 17.5 3.5 Z" 
+                  fill="${color}" 
+                  stroke="white" 
+                  stroke-width="2"/>
+            <circle cx="17.5" cy="16" r="5.5" 
+                    fill="rgba(255,255,255,0.3)" 
+                    stroke="white" 
+                    stroke-width="1"/>
+          </svg>
+        `;
+      }
+      
+      this.svgCache.set(cacheKey, svg);
+      const markerType = category === 'Estacionamiento' ? 'parking' : 
+                         category === 'CEDI' ? 'CEDI warehouse' :
+                         category === 'Cliente' ? 'client building' : 'pin';
+      console.log(`Cached ${markerType} SVG for: ${category || 'default'} (${color})`);
     }
     
-    console.log('Feature properties found, proceeding with detailed window...');
-    console.log('Properties to display:', properties);
-    
-    const coordinates = event.latLng;
-    
+    return this.svgCache.get(cacheKey)!;
+  }
+
+  /**
+   * Get marker color based on category
+   */
+  private getMarkerColor(category: string): string {
+    switch (category) {
+      case 'Estacionamiento':
+        return '#007FFF'; // Parking: Azure blue
+      case 'Cliente':
+        return '#ED1B24'; // Client: Red
+      case 'CEDI':
+        return '#FF8C00'; // CEDI: Dark orange
+      default:
+        return '#808080'; // Unknown: Gray
+    }
+  }
+
+  /**
+   * Setup marker clustering for better performance
+   */
+  private setupMarkerClustering(): void {
+    if (this.markers.length > 0) {
+      // Clear existing clusterer if any
+      if (this.markerClusterer) {
+        this.markerClusterer.clearMarkers();
+      }
+
+      // Create new marker clusterer
+      this.markerClusterer = new MarkerClusterer({
+        map: this.map,
+        markers: this.markers
+      });
+
+      console.log(`Marker clustering setup complete with ${this.markers.length} markers`);
+    }
+  }
+
+  /**
+   * Show info window for marker click
+   */
+  private async showMarkerInfoWindow(properties: any, position: any): Promise<void> {
     // Get address from coordinates using reverse geocoding
-    const address = await this.getAddressFromCoordinates(coordinates);
+    const address = await this.getAddressFromCoordinates(position);
     
-    // Create detailed info window
-    this.createDetailedInfoWindow(properties, address, coordinates);
+    // Create detailed info window using existing method
+    this.createDetailedInfoWindow(properties, address, position);
   }
   
   private async getAddressFromCoordinates(latLng: any): Promise<string> {
     return new Promise((resolve) => {
-      console.log('=== REVERSE GEOCODING DEBUG ===');
-      console.log('Input latLng:', latLng);
-      console.log('LatLng toString:', latLng.toString());
-      console.log('Lat:', latLng.lat(), 'Lng:', latLng.lng());
-      
       const geocoder = new this.Geocoder();
       
-      // Create location object with explicit lat/lng values
+      // Handle both Google Maps LatLng objects and plain coordinate objects
       const locationObj = {
-        lat: latLng.lat(),
-        lng: latLng.lng()
+        lat: typeof latLng.lat === 'function' ? latLng.lat() : latLng.lat,
+        lng: typeof latLng.lng === 'function' ? latLng.lng() : latLng.lng
       };
       
-      console.log('Geocoding location object:', locationObj);
-      
       geocoder.geocode({ location: locationObj }, (results: any, status: any) => {
-        console.log('Geocoder status:', status);
-        console.log('Geocoder results:', results);
-        
         if (status === google.maps.GeocoderStatus.OK && results && results.length > 0) {
-          const address = results[0].formatted_address;
-          console.log('Reverse geocoding successful:', address);
-          console.log('=== END REVERSE GEOCODING DEBUG ===');
-          resolve(address);
+          resolve(results[0].formatted_address);
         } else {
-          console.warn('Reverse geocoding failed with status:', status);
-          console.warn('Available statuses:', {
-            OK: google.maps.GeocoderStatus.OK,
-            ERROR: google.maps.GeocoderStatus.ERROR,
-            INVALID_REQUEST: google.maps.GeocoderStatus.INVALID_REQUEST,
-            OVER_QUERY_LIMIT: google.maps.GeocoderStatus.OVER_QUERY_LIMIT,
-            REQUEST_DENIED: google.maps.GeocoderStatus.REQUEST_DENIED,
-            UNKNOWN_ERROR: google.maps.GeocoderStatus.UNKNOWN_ERROR,
-            ZERO_RESULTS: google.maps.GeocoderStatus.ZERO_RESULTS
-          });
-          console.log('=== END REVERSE GEOCODING DEBUG ===');
           resolve('Dirección no disponible');
         }
       });
@@ -455,175 +490,39 @@ export class MapComponent implements AfterViewInit {
   }
   
   private createDetailedInfoWindow(properties: any, address: string, coordinates: any): void {
-    // Get category-specific styling
-    const categoryInfo = this.getCategoryInfo(properties.Category);
+    // Get category and color
+    const category = properties.Category || properties.category || 'Sin categoría';
+    const color = this.getMarkerColor(category);
     
-    // Create the detailed info window content
+    // Create simple info window content
     const content = `
-      <div style="
-        max-width: 280px;
-        padding: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.3;
-        color: #333;
-      ">
-        <!-- Header with category and name -->
-        <div style="
-          background: linear-gradient(135deg, ${categoryInfo.primaryColor}, ${categoryInfo.secondaryColor});
-          color: white;
-          padding: 10px;
-          margin: -10px -10px 10px -10px;
-          border-radius: 6px 6px 0 0;
-          position: relative;
-        ">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="
-              background: rgba(255,255,255,0.2);
-              padding: 4px 8px;
-              border-radius: 15px;
-              font-size: 11px;
-              font-weight: bold;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            ">${categoryInfo.icon} ${properties.Category || 'Sin categoría'}</span>
-          </div>
-          <h3 style="
-            margin: 6px 0 0 0;
-            font-size: 16px;
-            font-weight: 600;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-          ">${properties.Name || properties.name || 'Sin nombre'}</h3>
+      <div style="max-width: 250px; font-family: Arial, sans-serif; line-height: 1.4;">
+        <div style="background: ${color}; color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 4px;">
+          <strong>${properties.Name || properties.name || 'Sin nombre'}</strong>
+          <div style="font-size: 12px; opacity: 0.9;">${category}</div>
         </div>
         
-        <!-- Content sections -->
-        <div style="padding: 0 4px;">
-          <!-- Description -->
-          ${properties.Description ? `
-            <div style="margin-bottom: 8px;">
-              <div style="
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                margin-bottom: 4px;
-                font-weight: 600;
-                color: #555;
-                font-size: 13px;
-              ">
-                <span style="color: ${categoryInfo.primaryColor};">📋</span>
-                Descripción
-              </div>
-              <p style="
-                margin: 0;
-                padding: 6px 8px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                font-size: 13px;
-                color: #666;
-                border-left: 3px solid ${categoryInfo.primaryColor};
-              ">${properties.Description}</p>
-            </div>
-          ` : ''}
-          
-          <!-- Contact Information -->
-          <div style="margin-bottom: 8px;">
-            <div style="
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              margin-bottom: 6px;
-              font-weight: 600;
-              color: #555;
-              font-size: 13px;
-            ">
-              <span style="color: ${categoryInfo.primaryColor};">📞</span>
-              Contacto
-            </div>
-            
-            ${(properties['Phone Number'] || properties['phone'] || properties['Phone']) ? `
-              <div style="
-                margin-bottom: 4px;
-                padding: 5px 8px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              ">
-                <span style="color: #666; font-size: 12px;">Teléfono:</span>
-                <a href="tel:${properties['Phone Number'] || properties['phone'] || properties['Phone']}" style="
-                  color: ${categoryInfo.primaryColor};
-                  text-decoration: none;
-                  font-weight: 600;
-                  font-size: 12px;
-                ">${properties['Phone Number'] || properties['phone'] || properties['Phone']}</a>
-              </div>
-            ` : ''}
-            
-            ${properties['Person Responsable'] ? `
-              <div style="
-                margin-bottom: 4px;
-                padding: 5px 8px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              ">
-                <span style="color: #666; font-size: 12px;">Responsable:</span>
-                <span style="font-weight: 600; font-size: 12px; color: #333;">${properties['Person Responsable']}</span>
-              </div>
-            ` : ''}
+        ${properties.Description ? `<p style="margin: 8px 0; font-size: 13px;">${properties.Description}</p>` : ''}
+        
+        ${(properties['Phone Number'] || properties.phone) ? `
+          <div style="margin: 6px 0;">
+            <strong>Teléfono:</strong> 
+            <a href="tel:${properties['Phone Number'] || properties.phone}" style="color: ${color};">
+              ${properties['Phone Number'] || properties.phone}
+            </a>
           </div>
-          
-          <!-- Hours -->
-          ${properties.Hours ? `
-            <div style="margin-bottom: 8px;">
-              <div style="
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                margin-bottom: 4px;
-                font-weight: 600;
-                color: #555;
-                font-size: 13px;
-              ">
-                <span style="color: ${categoryInfo.primaryColor};">🕒</span>
-                Horarios
-              </div>
-              <div style="
-                padding: 5px 8px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                font-size: 12px;
-                color: #666;
-                font-weight: 600;
-              ">${properties.Hours}</div>
-            </div>
-          ` : ''}
-          
-          <!-- Address -->
-          <div style="margin-bottom: 5px;">
-            <div style="
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              margin-bottom: 4px;
-              font-weight: 600;
-              color: #555;
-              font-size: 13px;
-            ">
-              <span style="color: ${categoryInfo.primaryColor};">📍</span>
-              Dirección
-            </div>
-            <div style="
-              padding: 5px 8px;
-              background: #f8f9fa;
-              border-radius: 4px;
-              font-size: 12px;
-              color: #666;
-              border-left: 3px solid ${categoryInfo.primaryColor};
-            ">${address}</div>
-          </div>
+        ` : ''}
+        
+        ${properties['Person Responsable'] ? `
+          <div style="margin: 6px 0;"><strong>Responsable:</strong> ${properties['Person Responsable']}</div>
+        ` : ''}
+        
+        ${properties.Hours ? `
+          <div style="margin: 6px 0;"><strong>Horarios:</strong> ${properties.Hours}</div>
+        ` : ''}
+        
+        <div style="margin: 8px 0 0 0; padding: 6px; background: #f5f5f5; border-radius: 3px; font-size: 12px; color: #666;">
+          📍 ${address}
         </div>
       </div>
     `;
@@ -632,117 +531,164 @@ export class MapComponent implements AfterViewInit {
     const infoWindow = new google.maps.InfoWindow({
       content: content,
       position: coordinates,
-      maxWidth: 300,
-      pixelOffset: new google.maps.Size(0, -30) // Slight offset to position better
+      maxWidth: 280
     });
     
-    // Store reference to close any existing info window
+    // Close any existing info window
     if (this.currentInfoWindow) {
       this.currentInfoWindow.close();
     }
     this.currentInfoWindow = infoWindow;
     
-    // Add close event listener
+    // Clear reference when closed
     infoWindow.addListener('closeclick', () => {
-      console.log('Info window closed by user');
       this.currentInfoWindow = null;
     });
     
     infoWindow.open(this.map);
+  }
+
+  /**
+   * Count markers by category for filter display
+   */
+  private countMarkersByCategory(): void {
+    this.categoryCounts.clear();
     
-    console.log('Detailed info window opened for:', properties.Name || 'Unknown location');
-    console.log('Info window content length:', content.length);
-  }
-  
-  private getMarkerIcon(category: string): string {
-    const baseUrl = 'assets/markers/';
-    switch (category) {
-      case 'Estacionamiento':
-        return `${baseUrl}estacionamiento_marker.svg`;
-      case 'Cliente':
-        return `${baseUrl}cliente_marker.svg`;
-      case 'CEDI':
-        return `${baseUrl}cedi_marker.svg`;
-      default:
-        return `${baseUrl}estacionamiento_marker.svg`; // Default fallback
-    }
-  }
-  
-  
-  private getCategoryInfo(category: string): { primaryColor: string, secondaryColor: string, icon: string } {
-    switch (category) {
-      case 'Estacionamiento':
-        return {
-          primaryColor: '#2196F3',
-          secondaryColor: '#1976D2',
-          icon: '🅿️'
-        };
-      case 'Cliente':
-        return {
-          primaryColor: '#4CAF50',
-          secondaryColor: '#388E3C',
-          icon: '🏢'
-        };
-      case 'CEDI':
-        return {
-          primaryColor: '#FF9800',
-          secondaryColor: '#F57C00',
-          icon: '🏭'
-        };
-      default:
-        return {
-          primaryColor: '#9C27B0',
-          secondaryColor: '#7B1FA2',
-          icon: '📍'
-        };
-    }
-  }
-  
-  private createTestMarker(): void {
-    console.log('=== CREATING TEST MARKER ===');
-    
-    // Test if AdvancedMarkerElement is available
-    if (!this.AdvancedMarkerElement) {
-      console.error('AdvancedMarkerElement is not available!');
-      console.log('Library reference:', this.AdvancedMarkerElement);
-      return;
+    for (const feature of this.allFeatures) {
+      const category = feature.properties?.Category || feature.properties?.category || 'Estacionamiento';
+      const count = this.categoryCounts.get(category) || 0;
+      this.categoryCounts.set(category, count + 1);
     }
     
-    console.log('AdvancedMarkerElement is available - creating test marker');
+    console.log('Category counts:', Object.fromEntries(this.categoryCounts));
+  }
+
+  /**
+   * Get count of markers for a specific category
+   */
+  public getCategoryCount(category: string): number {
+    return this.categoryCounts.get(category) || 0;
+  }
+
+  /**
+   * Toggle visibility of a specific category
+   * Behavior:
+   * - If all categories are active: First click shows only that category
+   * - If some categories are active: Click toggles individual categories on/off
+   * - If only one category active and it's clicked: Show all categories
+   */
+  public toggleCategory(category: string): void {
+    const allCategories = ['Estacionamiento', 'CEDI', 'Cliente'];
+    const allActive = this.visibleCategories.size === 3;
     
-    try {
-      // Create test marker image
-      const testImg = document.createElement('img');
-      testImg.src = 'assets/markers/estacionamiento_marker.svg';
-      testImg.style.width = '32px';
-      testImg.style.height = '32px';
-      testImg.alt = 'Test marker';
+    if (allActive) {
+      // Starting state: all active → show only clicked category
+      this.visibleCategories.clear();
+      this.visibleCategories.add(category);
+      console.log(`First filter: showing only ${category}`);
+    } else {
+      // Filtered state: toggle individual categories
+      if (this.visibleCategories.has(category)) {
+        // If category is active, deactivate it
+        this.visibleCategories.delete(category);
+        console.log(`Deactivated: ${category}`);
+        
+        // If no categories left, show all
+        if (this.visibleCategories.size === 0) {
+          allCategories.forEach(cat => this.visibleCategories.add(cat));
+          console.log('No categories active - showing all');
+        }
+      } else {
+        // If category is inactive, activate it
+        this.visibleCategories.add(category);
+        console.log(`Activated: ${category}`);
+      }
+    }
+    
+    console.log('Active categories:', Array.from(this.visibleCategories));
+    
+    // Update marker visibility
+    this.updateMarkerVisibility();
+    
+    // Adjust viewport to show visible markers
+    this.adjustViewportToVisibleMarkers();
+  }
+
+  /**
+   * Update marker visibility based on selected categories
+   */
+  private updateMarkerVisibility(): void {
+    // Hide all markers first
+    this.markersByCategory.forEach((markers, category) => {
+      const isVisible = this.visibleCategories.has(category);
       
-      console.log('Test image created:', testImg);
-      console.log('Test image src:', testImg.src);
+      markers.forEach(marker => {
+        marker.setVisible(isVisible);
+      });
+    });
+    
+    // Update clusterer with visible markers only
+    this.updateMarkerClustering();
+    
+    console.log('Visible categories:', Array.from(this.visibleCategories));
+  }
+
+  /**
+   * Update marker clustering with only visible markers
+   */
+  private updateMarkerClustering(): void {
+    if (this.markerClusterer) {
+      this.markerClusterer.clearMarkers();
       
-      // Test image loading
-      testImg.onload = () => {
-        console.log('Test SVG loaded successfully');
-      };
-      testImg.onerror = (e) => {
-        console.error('Test SVG failed to load:', e);
-      };
-      
-      // Create AdvancedMarkerElement using stored reference
-      const testMarker = new this.AdvancedMarkerElement({
-        map: this.map,
-        position: { lat: 25.6866, lng: -100.3161 }, // Center of Monterrey
-        content: testImg,
-        title: 'Test SVG Marker'
+      // Get all visible markers
+      const visibleMarkers: any[] = [];
+      this.visibleCategories.forEach(category => {
+        const markers = this.markersByCategory.get(category) || [];
+        visibleMarkers.push(...markers);
       });
       
-      console.log('Test AdvancedMarkerElement created successfully:', testMarker);
+      // Add visible markers to clusterer
+      this.markerClusterer.addMarkers(visibleMarkers);
       
-    } catch (e) {
-      console.error('Error creating test marker:', e);
+      console.log(`Updated clustering with ${visibleMarkers.length} visible markers`);
+    }
+  }
+
+  /**
+   * Adjust map viewport to show all visible markers
+   */
+  private adjustViewportToVisibleMarkers(): void {
+    if (this.visibleCategories.size === 0) {
+      return; // No visible categories, don't adjust
     }
     
-    console.log('=== END TEST MARKER ===');
+    const bounds = new google.maps.LatLngBounds();
+    let hasMarkers = false;
+    
+    // Add all visible markers to bounds
+    this.visibleCategories.forEach(category => {
+      const markers = this.markersByCategory.get(category) || [];
+      markers.forEach(marker => {
+        bounds.extend(marker.getPosition());
+        hasMarkers = true;
+      });
+    });
+    
+    if (hasMarkers) {
+      // Fit map to show all visible markers
+      this.map.fitBounds(bounds);
+      
+      // Add some padding and ensure reasonable zoom levels
+      setTimeout(() => {
+        const currentZoom = this.map.getZoom();
+        if (currentZoom > 16) {
+          this.map.setZoom(16); // Max zoom for better overview
+        } else if (currentZoom < 10) {
+          this.map.setZoom(10); // Min zoom for detail
+        }
+      }, 100);
+      
+      console.log(`Adjusted viewport for visible categories:`, Array.from(this.visibleCategories));
+    }
   }
 }

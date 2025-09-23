@@ -1,3 +1,191 @@
+/* Category Filter Boxes */
+.category-filters {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.filter-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  min-width: 180px;
+  color: white;
+}
+
+.filter-box:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.filter-box.parking.active {
+  border-color: #007FFF;
+  background: #007FFF;
+  color: white;
+}
+
+.filter-box.parking.active .filter-label {
+  color: white;
+}
+
+.filter-box.parking.active .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.filter-box.parking:not(.active) {
+  border-color: #888;
+  background: #888;
+  color: white;
+}
+
+.filter-box.parking:not(.active) .filter-label {
+  color: white;
+}
+
+.filter-box.parking:not(.active) .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.filter-box.parking:not(.active) svg path {
+  fill: #888 !important;
+}
+
+.filter-box.cedi.active {
+  border-color: #FF8C00;
+  background: #FF8C00;
+  color: white;
+}
+
+.filter-box.cedi.active .filter-label {
+  color: white;
+}
+
+.filter-box.cedi.active .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.filter-box.cedi:not(.active) {
+  border-color: #888;
+  background: #888;
+  color: white;
+}
+
+.filter-box.cedi:not(.active) .filter-label {
+  color: white;
+}
+
+.filter-box.cedi:not(.active) .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.filter-box.cedi:not(.active) svg path {
+  fill: #888 !important;
+}
+
+.filter-box.client.active {
+  border-color: #ED1B24;
+  background: #ED1B24;
+  color: white;
+}
+
+.filter-box.client.active .filter-label {
+  color: white;
+}
+
+.filter-box.client.active .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.filter-box.client:not(.active) {
+  border-color: #888;
+  background: #888;
+  color: white;
+}
+
+.filter-box.client:not(.active) .filter-label {
+  color: white;
+}
+
+.filter-box.client:not(.active) .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.filter-box.client:not(.active) svg path {
+  fill: #888 !important;
+}
+
+.filter-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.filter-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.filter-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.filter-box.active .filter-count {
+  background: rgba(0, 0, 0, 0.12);
+  color: #333;
+  font-weight: 600;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .category-filters {
+    top: 10px;
+    left: 10px;
+    gap: 8px;
+  }
+  
+  .filter-box {
+    padding: 8px 10px;
+    min-width: 150px;
+  }
+  
+  .filter-label {
+    font-size: 13px;
+  }
+  
+  .filter-count {
+    font-size: 11px;
+  }
+}
+
 /* Full-screen map container */
 .map-container {
   position: fixed;
