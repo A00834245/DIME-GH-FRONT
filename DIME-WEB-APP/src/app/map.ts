@@ -159,8 +159,9 @@ export class MapComponent implements AfterViewInit {
       this.Geocoder = Geocoder;
       this.Autocomplete = Autocomplete;
       
-      // Initialize the map with performance optimizations
+      // Initialize the map with cloud-based custom styling
       this.map = new Map(this.mapElement.nativeElement, {
+        mapId: environment.googleMapId, // Apply your custom cloud-based style
         center: { lat: 25.6866, lng: -100.3161 }, // Monterrey, Mexico
         zoom: 10, // Good zoom level for viewing markers
         zoomControl: true,
@@ -171,6 +172,7 @@ export class MapComponent implements AfterViewInit {
         fullscreenControl: true,
         gestureHandling: 'greedy',
         disableDefaultUI: false,
+        // Note: styles array removed because mapId takes precedence
         restriction: {
           // Restrict to Mexico area to reduce map data
           latLngBounds: {
