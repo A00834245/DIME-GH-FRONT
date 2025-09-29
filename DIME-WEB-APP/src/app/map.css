@@ -12,7 +12,7 @@
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   transition: opacity 0.2s ease, visibility 0.2s ease;
 }
@@ -27,8 +27,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 6px 10px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
@@ -159,25 +159,52 @@
 
 .filter-label {
   font-weight: 500;
-  font-size: 13px;
+  font-size: 11px;
   color: #1d1d1f;
   white-space: nowrap;
 }
 
 .filter-count {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   background: rgba(0, 0, 0, 0.06);
   color: #86868b;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 12px;
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
 }
 
 
 
-/* Responsive adjustments */
+/* Desktop specific styles - smaller buttons */
+@media (min-width: 769px) {
+  .filter-box {
+    padding: 5px 8px;
+    gap: 3px;
+  }
+  
+  .filter-label {
+    font-size: 10px;
+  }
+  
+  .filter-count {
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+  
+  .filter-icon svg {
+    width: 18px;
+    height: 22px;
+  }
+  
+  .category-filters {
+    gap: 6px;
+    top: 75px; /* Increased from 65px to add more space */
+  }
+}
+
+/* Responsive adjustments - preserve existing mobile styles */
 @media (max-width: 768px) {
   .search-box {
     top: 10px;
