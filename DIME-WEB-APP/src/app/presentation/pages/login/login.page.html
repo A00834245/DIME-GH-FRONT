@@ -1,50 +1,45 @@
 <section class="login-wrapper">
-  <div class="login-card" role="form" aria-labelledby="login-title">
+  <div class="login-card" role="main" aria-labelledby="login-title">
     <div class="logo-container">
       <img [src]="logoPath" alt="Logo de la empresa" class="company-logo" />
     </div>
     <h1 id="login-title" class="login-title">Bienvenido</h1>
     <p class="login-subtitle">Ingresa con tus credenciales de Arca Continental</p>
 
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <div class="form-field">
-        <label for="username">Correo</label>
-        <input
-          id="username"
-          type="text"
-          formControlName="username"
-          autocomplete="username"
-          placeholder="usuario@empresa.com"
-          [attr.aria-invalid]="form.controls['username'].invalid && (form.controls['username'].touched || form.controls['username'].dirty)"
-          required
-        />
-        <small class="error" *ngIf="form.controls['username'].invalid && form.controls['username'].touched">
-          El usuario es requerido
-        </small>
+    <div class="auth-container">
+      <div *ngIf="!isLoggedIn; else alreadyLoggedIn">
+        <button 
+          class="microsoft-login-button" 
+          type="button" 
+          (click)="loginWithMicrosoft()"
+          [disabled]="isSubmitting()"
+          aria-label="Iniciar sesión con Microsoft">
+          <span *ngIf="!isSubmitting(); else loading" class="button-content">
+            <svg class="microsoft-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#f25022" d="M1 1h10v10H1z"/>
+              <path fill="#00a4ef" d="M13 1h10v10H13z"/>
+              <path fill="#7fba00" d="M1 13h10v10H1z"/>
+              <path fill="#ffb900" d="M13 13h10v10H13z"/>
+            </svg>
+            Iniciar sesión con Microsoft
+          </span>
+          <ng-template #loading>
+            <span>Procesando…</span>
+          </ng-template>
+        </button>
+        
+        <p class="auth-description">
+          Utiliza tu cuenta corporativa para acceder al sistema
+        </p>
       </div>
-
-      <div class="form-field">
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          autocomplete="current-password"
-          placeholder="••••••••"
-          required
-        />
-        <small class="error" *ngIf="form.controls['password'].invalid && form.controls['password'].touched">
-          La contraseña es requerida (mínimo 6 caracteres)
-        </small>
-      </div>
-
-      <button class="login-button" type="submit" [disabled]="form.invalid || isSubmitting()">
-        <span *ngIf="!isSubmitting(); else loading">Iniciar sesión</span>
-      </button>
-      <ng-template #loading>
-        <span>Procesando…</span>
+      
+      <ng-template #alreadyLoggedIn>
+        <div class="logged-in-message">
+          <p>✅ Ya has iniciado sesión</p>
+          <p>Serás redirigido automáticamente...</p>
+        </div>
       </ng-template>
-    </form>
+    </div>
   </div>
 </section>
 

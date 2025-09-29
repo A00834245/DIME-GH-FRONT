@@ -4,16 +4,12 @@ import {
     BrowserCacheLocation,
     InteractionType,
     LogLevel,
-    AuthenticationResult,
 } from '@azure/msal-browser';
 import {
     MsalGuardConfiguration,
     MsalInterceptorConfiguration,
 } from '@azure/msal-angular';
-import {
-    MsalGuardConfiguration,
-    MsalInterceptorConfiguration
-} from '../../environment/environment';
+import { environment } from '../../environment/environment';
 
 export function MSALInstanceFactory(): IPublicClientApplication {
     return new PublicClientApplication({
@@ -22,6 +18,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             authority: environment.msal.authority,
             redirectUri: environment.msal.redirectUri,
             postLogoutRedirectUri: environment.msal.postLogoutRedirectUri,
+            knownAuthorities: environment.msal.knownAuthorities,
         },
         cache: {
             cacheLocation: BrowserCacheLocation.LocalStorage,
@@ -38,7 +35,24 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     });
 }
 
-export function MSALGuardFactory(msalInstance: IPublicClientApplication): MsalGuardConfiguration {
+export function MSALGuardConfigFactory(): MsalGuardConfiguration {
+    return {
+        interactionType: InteractionType.Redirect,
+        authRequest: { 
+            scopes: ['openid', 'profile', 'offline_access']
+        },
+        loginFailedRoute: '/login-failed',
+    };
+}
+
+export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
+    const protectResourceMap = new Map<string, Array<string>>();
+    // Add your API endpoints here when you have them
+    // protectResourceMap.set('https://your-api.com', ['https://your-api.com/access']);
     
+    return {
+        interactionType: InteractionType.Redirect,
+        protectedResourceMap: protectResourceMap,
+    };
 }
 

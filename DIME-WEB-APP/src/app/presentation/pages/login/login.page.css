@@ -76,31 +76,76 @@
   font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
 }
 
-.login-button {
+.auth-container {
+  margin-top: 20px;
+}
+
+.microsoft-login-button {
   width: 100%;
-  height: 44px;
-  border: none;
-  border-radius: 10px;
-  background: #2563eb;
-  color: #ffffff;
-  font-weight: 700;
+  height: 50px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
   font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
   cursor: pointer;
-  margin-top: 6px;
-  transition: transform 0.05s ease, filter 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.login-button:hover {
-  filter: brightness(1.05);
+.microsoft-login-button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.login-button:active {
+.microsoft-login-button:active {
   transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.login-button:disabled {
-  background: #93c5fd;
+.microsoft-login-button:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
   cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.microsoft-icon {
+  flex-shrink: 0;
+}
+
+.auth-description {
+  margin-top: 16px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
+  line-height: 1.4;
+}
+
+.logged-in-message {
+  text-align: center;
+  padding: 20px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  color: #0369a1;
+}
+
+.logged-in-message p {
+  margin: 8px 0;
+  font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;
 }
 
 @media (max-width: 480px) {
