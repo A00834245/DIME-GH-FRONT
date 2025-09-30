@@ -31,11 +31,30 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes), 
     provideClientHydration(withEventReplay()),
     provideHttpClient(withInterceptorsFromDi()),
-    importProvidersFrom(MsalModule),
-    {provide: MSAL_INSTANCE, useFactory: MSALInstanceFactory},
-    {provide: MSAL_GUARD_CONFIG, useFactory: MSALGuardConfigFactory},
-    {provide: MSAL_INTERCEPTOR_CONFIG, useFactory: MSALInterceptorConfigFactory},
-    {provide: HTTP_INTERCEPTORS, useClass: MsalInterceptor, multi: true},
+    
+    // MSAL Configuration
+    {
+      provide: MSAL_INSTANCE, 
+      useFactory: MSALInstanceFactory,
+      deps: []
+    },
+    {
+      provide: MSAL_GUARD_CONFIG, 
+      useFactory: MSALGuardConfigFactory,
+      deps: []
+    },
+    {
+      provide: MSAL_INTERCEPTOR_CONFIG, 
+      useFactory: MSALInterceptorConfigFactory,
+      deps: []
+    },
+    {
+      provide: HTTP_INTERCEPTORS, 
+      useClass: MsalInterceptor, 
+      multi: true
+    },
+    
+    // MSAL Services
     MsalService,
     MsalGuard,
     MsalBroadcastService,

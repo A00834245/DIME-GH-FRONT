@@ -12,7 +12,10 @@ import {
 import { environment } from '../../environment/environment';
 
 export function MSALInstanceFactory(): IPublicClientApplication {
-    return new PublicClientApplication({
+    console.log('MSAL Instance Factory called');
+    console.log('Environment MSAL config:', environment.msal);
+    
+    const msalConfig = {
         auth: {
             clientId: environment.msal.clientId,
             authority: environment.msal.authority,
@@ -26,23 +29,29 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         },
         system: {
             loggerOptions: {
-                logLevel: LogLevel.Warning,
-                loggerCallback: (_level, message) => {
-                    console.log(message);
+                logLevel: LogLevel.Info,
+                loggerCallback: (level: LogLevel, message: string, containsPii: boolean) => {
+                    console.log('[MSAL]', message);
                 }
             }
         }
-    });
+    };
+    
+    console.log('Creating MSAL instance with config:', msalConfig);
+    return new PublicClientApplication(msalConfig);
 }
 
 export function MSALGuardConfigFactory(): MsalGuardConfiguration {
-    return {
+    console.log('MSAL Guard Config Factory called');
+    const config: MsalGuardConfiguration = {
         interactionType: InteractionType.Redirect,
         authRequest: { 
             scopes: ['openid', 'profile', 'offline_access']
         },
-        loginFailedRoute: '/login-failed',
+        loginFailedRoute: '/login',
     };
+    console.log('Guard config created:', config);
+    return config;
 }
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
