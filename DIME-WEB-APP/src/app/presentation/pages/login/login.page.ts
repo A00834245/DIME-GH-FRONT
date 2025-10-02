@@ -2,12 +2,11 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { EnvironmentDebugComponent } from '../../../debug/environment-debug.component';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, EnvironmentDebugComponent],
+  imports: [CommonModule],
   templateUrl: './login.page.html',
   styleUrl: './login.page.css'
 })
