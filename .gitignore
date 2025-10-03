@@ -1,0 +1,24 @@
+# Root-level gitignore
+
+# Node / Angular common
+node_modules/
+dist/
+out-tsc/
+
+# VS Code
+.vscode/
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# Environment and secrets
+# Ignore env files at root and within the app subfolder
+.env
+DIME-WEB-APP/.env
+.env.local
+.env.*.local
+
+# Angular cache
+.angular/
+.angular/cache/
