@@ -9,12 +9,62 @@ import {
     MsalGuardConfiguration,
     MsalInterceptorConfiguration,
 } from '@azure/msal-angular';
-import { environment } from '@core/environments/environment';
+import { environment } from '../environments/environment';
 
 export function MSALInstanceFactory(): IPublicClientApplication {
     console.log('MSAL Instance Factory called');
     console.log('Environment MSAL config:', environment.msal);
     
+    const NETWORK_TIMEOUT_MS = 30_000;
+
+    const networkClient = {
+        sendGetRequestAsync: async (url: string, options?: any) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: options?.headers || {},
+                    signal: controller.signal,
+                });
+                const text = await response.text();
+                let body: any = text;
+                try { body = JSON.parse(text); } catch {}
+                const headers: Record<string, string> = {};
+                response.headers.forEach((value, key) => headers[key] = value);
+                return { headers, body, status: response.status } as any;
+            } catch (error) {
+                console.error('[MSAL][GET] Network error:', error);
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        },
+        sendPostRequestAsync: async (url: string, options?: any) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: options?.headers || {},
+                    body: options?.body || undefined,
+                    signal: controller.signal,
+                });
+                const text = await response.text();
+                let body: any = text;
+                try { body = JSON.parse(text); } catch {}
+                const headers: Record<string, string> = {};
+                response.headers.forEach((value, key) => headers[key] = value);
+                return { headers, body, status: response.status } as any;
+            } catch (error) {
+                console.error('[MSAL][POST] Network error:', error);
+                throw error;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+    };
+
     const msalConfig = {
         auth: {
             clientId: environment.msal.clientId,
@@ -28,6 +78,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             storeAuthStateInCookie: false,
         },
         system: {
+            networkClient,
             loggerOptions: {
                 logLevel: LogLevel.Info,
                 loggerCallback: (level: LogLevel, message: string, containsPii: boolean) => {

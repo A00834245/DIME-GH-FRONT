@@ -51,6 +51,8 @@ Thumbs.db
 
 # Warp workspace
 warp/
+WARP.md
+warp.md
 
 # editor config
 .editorconfig
