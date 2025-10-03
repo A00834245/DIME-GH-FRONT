@@ -36,9 +36,6 @@ This is a modern Angular 20 web application with Server-Side Rendering (SSR) cap
 
 ### Primary Development
 ```bash
-# Navigate to the application directory
-cd DIME-WEB-APP
-
 # Start development server (http://localhost:4200)
 npm start
 # or
@@ -131,7 +128,6 @@ Available tasks:
 
 ### Production Build
 ```bash
-cd DIME-WEB-APP
 ng build
 ```
 
@@ -152,7 +148,7 @@ Build artifacts are stored in `dist/DIME-WEB-APP/`:
 
 ## Development Workflow
 
-1. **Project Setup**: Run `npm install` in the `DIME-WEB-APP` directory
+1. **Project Setup**: Run `npm install` in the project root
 2. **Development**: Use `npm start` for live reload development server
 3. **Testing**: Use `npm test` for unit tests
 4. **Building**: Use `npm run build` for production builds
@@ -161,6 +157,6 @@ Build artifacts are stored in `dist/DIME-WEB-APP/`:
 ## File Paths
 
 When referencing files, use paths relative to the project root:
-- Application code: `DIME-WEB-APP/src/app/`
-- Configuration: `DIME-WEB-APP/angular.json`, `DIME-WEB-APP/package.json`
-- Build output: `DIME-WEB-APP/dist/`
+- Application code: `src/app/`
+- Configuration: `angular.json`, `package.json`
+- Build output: `dist/DIME-WEB-APP/`

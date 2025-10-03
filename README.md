@@ -4,13 +4,10 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 ## Quick Start
 
-1. **Navigate to the project directory**: `cd DIME-WEB-APP` (if you're in the AC-DN-Business-DIME-WEBAPP folder)
-2. **Install dependencies**: `npm install`
-3. **Set up environment variables**: Copy `.env.example` to `.env` and add your Google Maps API key
-4. **Start the development server**: `npm start`
-5. **Open your browser** and go to `http://localhost:4200`
-
-> **Note**: Make sure you're in the `DIME-WEB-APP` directory before running npm commands. The `package.json` file is located in this subdirectory, not in the parent `AC-DN-Business-DIME-WEBAPP` folder.
+1. **Install dependencies**: `npm install`
+2. **Set up environment variables**: Copy `.env.example` to `.env` and add your Google Maps and Azure B2C values
+3. **Start the development server**: `npm start`
+4. **Open your browser** and go to `http://localhost:4200`
 
 ## Prerequisites
 
@@ -22,14 +19,22 @@ Before running the application, ensure you have the following installed:
 
 ## Environment Setup
 
-The application uses environment variables for Google Maps configuration. Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the project root with the following variables:
 
 ```
+# Google Maps
 NG_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 NG_APP_GOOGLE_MAP_ID=your_map_id
 NG_APP_GOOGLE_DATASET_ID=your_dataset_id
 NG_APP_GOOGLE_STYLE_ID=your_style_id
 NG_APP_GOOGLE_PROJECT_ID=your_project_id
+
+# Azure AD B2C (see ENVIRONMENT-SETUP.md for details)
+NG_APP_AZURE_CLIENT_ID=your-client-id-from-azure-portal
+NG_APP_AZURE_AUTHORITY_DOMAIN=yourtenant.b2clogin.com
+NG_APP_AZURE_TENANT_NAME=yourtenant.onmicrosoft.com
+NG_APP_AZURE_LOGIN_USER_FLOW=B2C_1_signin
+NG_APP_AZURE_REDIRECT_URI=http://localhost:4200/auth-callback
 ```
 
 ## Installation
@@ -145,6 +150,8 @@ src/
 
 ## Troubleshooting
 
+See ENVIRONMENT-SETUP.md for Azure B2C specifics.
+
 ### Common Issues
 
 **Issue: Google Maps not loading**
@@ -165,11 +172,6 @@ src/
 **Issue: Port 4200 already in use**
 - Use a different port: `ng serve --port 4201`
 - Or stop other processes using port 4200
-
-**Issue: `npm error code ENOENT` or "Could not read package.json"**
-- Make sure you're in the correct directory: `DIME-WEB-APP`
-- Navigate to the correct folder: `cd DIME-WEB-APP`
-- Verify you're in the right location: `ls` (should show package.json)
 
 ## Getting Google Maps API Key
 
