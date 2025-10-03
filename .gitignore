@@ -4,21 +4,45 @@
 node_modules/
 dist/
 out-tsc/
+/tmp
+/bazel-out
 
 # VS Code
 .vscode/
+.history/*
 
 # Logs
 npm-debug.log
 yarn-error.log
+libpeerconnection.log
+testem.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # Environment and secrets
 # Ignore env files at root and within the app subfolder
 .env
 DIME-WEB-APP/.env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Angular cache
+# Angular cache / misc
 .angular/
 .angular/cache/
+.sass-cache/
+/connect.lock
+/coverage
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
