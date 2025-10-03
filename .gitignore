@@ -47,3 +47,6 @@ DIME-WEB-APP/.env
 # System files
 .DS_Store
 Thumbs.db
+
+# Warp workspace
+warp/
