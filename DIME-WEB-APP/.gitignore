@@ -50,3 +50,4 @@ WARP.md
 .env.development.local
 .env.test.local
 .env.production.local
+/enviroment/enviroment.ts
