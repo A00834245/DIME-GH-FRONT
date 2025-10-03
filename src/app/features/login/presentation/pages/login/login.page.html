@@ -1,0 +1,44 @@
+<section class="login-wrapper">
+  <div class="login-card" role="main" aria-labelledby="login-title">
+    <div class="logo-container">
+      <img [src]="logoPath" alt="Logo de la empresa" class="company-logo" />
+    </div>
+    <h1 id="login-title" class="login-title">Bienvenido</h1>
+    <p class="login-subtitle">Ingresa con tus credenciales de Arca Continental</p>
+
+    <div class="auth-container">
+      <div *ngIf="!isLoggedIn; else alreadyLoggedIn">
+        <button 
+          class="microsoft-login-button" 
+          type="button" 
+          (click)="loginWithMicrosoft()"
+          [disabled]="isSubmitting()"
+          aria-label="Iniciar sesión con Microsoft">
+          <span *ngIf="!isSubmitting(); else loading" class="button-content">
+            <svg class="microsoft-icon" viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#f25022" d="M1 1h10v10H1z"/>
+              <path fill="#00a4ef" d="M13 1h10v10H13z"/>
+              <path fill="#7fba00" d="M1 13h10v10H1z"/>
+              <path fill="#ffb900" d="M13 13h10v10H13z"/>
+            </svg>
+            Iniciar sesión con Microsoft
+          </span>
+          <ng-template #loading>
+            <span>Procesando…</span>
+          </ng-template>
+        </button>
+        
+        <p class="auth-description">
+          Utiliza tu cuenta corporativa para acceder al sistema
+        </p>
+      </div>
+      
+      <ng-template #alreadyLoggedIn>
+        <div class="logged-in-message">
+          <p>✅ Ya has iniciado sesión</p>
+          <p>Serás redirigido automáticamente...</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</section>

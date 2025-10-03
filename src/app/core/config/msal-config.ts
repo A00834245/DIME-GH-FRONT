@@ -9,7 +9,7 @@ import {
     MsalGuardConfiguration,
     MsalInterceptorConfiguration,
 } from '@azure/msal-angular';
-import { environment } from '../../environment/environment';
+import { environment } from '@core/environments/environment';
 
 export function MSALInstanceFactory(): IPublicClientApplication {
     console.log('MSAL Instance Factory called');

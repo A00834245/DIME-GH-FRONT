@@ -1,5 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
+import { appConfig } from '@core/config/app.config';
 import { App } from './app/app';
 
 // Initialize MSAL before bootstrapping the app

@@ -35,6 +35,7 @@ DIME-WEB-APP/.env
 .env.test.local
 .env.production.local
 /src/environment/environment.ts
+/src/app/core/environments/environment.ts
 
 # Angular cache / misc
 .angular/

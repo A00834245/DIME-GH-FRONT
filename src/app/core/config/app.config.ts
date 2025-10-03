@@ -21,7 +21,7 @@ import {
   MSALInstanceFactory,
   MSALGuardConfigFactory,
   MSALInterceptorConfigFactory,
-} from './auth/msal-config';
+} from '@core/config/msal-config';
 
 
 export const appConfig: ApplicationConfig = {

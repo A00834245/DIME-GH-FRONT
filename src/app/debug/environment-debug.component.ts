@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { environment } from '../../environment/environment';
+import { environment } from '@core/environments/environment';
 
 @Component({
   selector: 'app-environment-debug',
