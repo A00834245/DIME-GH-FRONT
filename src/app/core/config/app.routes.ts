@@ -13,7 +13,7 @@ export const routes: Routes = [
   },
   {
     path: 'map',
-    canActivate: [MsalGuard],
+    // canActivate: [MsalGuard], // Temporarily disabled to allow testing without login
     loadChildren: () => import('@features/map/presentation/map.routes').then(m => m.MAP_ROUTES)
   },
   { path: '**', redirectTo: 'login' }
