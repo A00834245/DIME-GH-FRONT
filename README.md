@@ -93,7 +93,7 @@ The following scripts are available via npm:
 - `npm run build` - Builds the app for production
 - `npm run watch` - Builds the app in development mode with file watching
 - `npm test` - Runs unit tests
-- `npm run serve:ssr:DIME-WEB-APP` - Serves the server-side rendered version
+- `npm run serve:ssr:dime-web-app` - Serves the server-side rendered version
 
 ## Building
 

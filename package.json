@@ -10,7 +10,7 @@
     "build": "ng build",
     "watch": "npm run generate-env && ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:DIME-WEB-APP": "node dist/DIME-WEB-APP/server/server.mjs"
+    "serve:ssr:dime-web-app": "node dist/dime-web-app/server/server.mjs"
   },
   "prettier": {
     "printWidth": 100,
