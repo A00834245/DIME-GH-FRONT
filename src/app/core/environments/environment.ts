@@ -1,14 +1,15 @@
-// Production environment configuration
-// All values must be set via CI/CD environment variables
+// Development environment configuration
+// Uses process.env variables that are loaded from .env file locally
+// and from CI/CD environment variables in pipelines
 // @ngx-env/builder replaces process.env references at build time
 
 export const environment = {
-  production: true,
+  production: false,
   msal: {
     clientId: process.env['NG_APP_AZURE_CLIENT_ID'] || '',
     authority: `https://${process.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${process.env['NG_APP_AZURE_TENANT_NAME']}/${process.env['NG_APP_AZURE_LOGIN_USER_FLOW']}`,
-    redirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || '',
-    postLogoutRedirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || '',
+    redirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
+    postLogoutRedirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
     knownAuthorities: [process.env['NG_APP_AZURE_AUTHORITY_DOMAIN'] || '']
   },
   // Google Maps

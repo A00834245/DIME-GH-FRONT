@@ -1,8 +1,21 @@
 // Define the type of the environment variables.
 declare interface Env {
   readonly NODE_ENV: string;
-  // Google Maps API Key
+  
+  // Azure AD B2C Configuration
+  readonly NG_APP_AZURE_CLIENT_ID: string;
+  readonly NG_APP_AZURE_AUTHORITY_DOMAIN: string;
+  readonly NG_APP_AZURE_TENANT_NAME: string;
+  readonly NG_APP_AZURE_LOGIN_USER_FLOW: string;
+  readonly NG_APP_AZURE_REDIRECT_URI: string;
+  
+  // Google Maps Configuration
   readonly NG_APP_GOOGLE_MAPS_API_KEY: string;
+  readonly NG_APP_GOOGLE_MAP_ID: string;
+  readonly NG_APP_GOOGLE_DATASET_ID: string;
+  readonly NG_APP_GOOGLE_STYLE_ID: string;
+  readonly NG_APP_GOOGLE_PROJECT_ID: string;
+  
   [key: string]: any;
 }
 
