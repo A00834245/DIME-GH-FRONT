@@ -60,3 +60,8 @@ warp.md
 **/.editorconfig
 
 
+# .md files
+MSAL-DEVELOPMENT-MODE.md
+MSAL-BYPASS-SUMMARY.md
+
+

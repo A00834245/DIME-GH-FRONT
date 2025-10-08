@@ -5,6 +5,8 @@
 
 export const environment = {
   production: false,
+  // Set to false to bypass MSAL authentication during development
+  enableMsal: false,
   msal: {
     clientId: process.env['NG_APP_AZURE_CLIENT_ID'] || '',
     authority: `https://${process.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${process.env['NG_APP_AZURE_TENANT_NAME']}/${process.env['NG_APP_AZURE_LOGIN_USER_FLOW']}`,
