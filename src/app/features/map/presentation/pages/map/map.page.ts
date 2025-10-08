@@ -5,6 +5,7 @@ import { environment } from '@core/environments/environment';
 import { DatasetService } from '@features/map/core/services/dataset.service';
 import { AuthService } from '@core/services/auth.service';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import { HeaderComponent } from '@layout/components/header/header.component';
 
 // Declare google as any to avoid TypeScript errors
 declare var google: any;
@@ -12,22 +13,13 @@ declare var google: any;
 @Component({
   selector: 'app-map-page',
   standalone: true,
-  imports: [NgIf, NgFor],
+  imports: [NgIf, NgFor, HeaderComponent],
   template: `
     <!-- Authentication Header -->
-    <header class="map-header">
-      <div class="header-content">
-        <div class="logo-container">
-          <img [src]="logoPath" alt="Logo de la empresa" class="company-logo" />
-        </div>
-        <div class="user-info">
-          <span class="welcome-text">Bienvenido, {{ userName() }}</span>
-          <button class="logout-button" (click)="logout()" type="button">
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    </header>
+    <app-header 
+      [userName]="userName()" 
+      (logout)="handleLogout()">
+    </app-header>
 
     <!-- Map Container -->
     <div class="map-container">
@@ -116,7 +108,6 @@ export class MapPage implements AfterViewInit {
   @ViewChild('searchInput', { static: true }) searchInput!: ElementRef;
   
   // Authentication properties
-  protected readonly logoPath = '/images/AC.MX_logo.png';
   protected readonly userName = signal<string>('');
   
   // Map properties
@@ -184,7 +175,7 @@ export class MapPage implements AfterViewInit {
     }
   }
 
-  protected logout(): void {
+  protected handleLogout(): void {
     this.authService.logout();
   }
 
