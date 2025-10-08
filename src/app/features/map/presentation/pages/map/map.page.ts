@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { environment } from '@core/environments/environment';
 import { DatasetService } from '@features/map/core/services/dataset.service';
 import { AuthService } from '@core/services/auth.service';
-import { MsalService } from '@azure/msal-angular';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
 // Declare google as any to avoid TypeScript errors
@@ -147,8 +146,7 @@ export class MapPage implements AfterViewInit {
     @Inject(PLATFORM_ID) private platformId: Object,
     private datasetService: DatasetService,
     private authService: AuthService,
-    private router: Router,
-    private msalService: MsalService
+    private router: Router
   ) {}
   
   ngAfterViewInit(): void {
@@ -178,10 +176,11 @@ export class MapPage implements AfterViewInit {
 
   // Authentication methods
   private loadUserInfo(): void {
-    const accounts = this.msalService.instance.getAllAccounts();
-    if (accounts.length > 0) {
-      const account = accounts[0];
-      this.userName.set(account.name || account.username || 'Usuario');
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.userName.set(user.name || user.username || 'Usuario');
+    } else {
+      this.userName.set('Usuario');
     }
   }
 

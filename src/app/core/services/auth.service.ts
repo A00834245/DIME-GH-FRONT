@@ -45,7 +45,7 @@ export class AuthService {
         }
     }
 
-    login() {
+    login(): void {
         if (!environment.enableMsal) {
             console.log('[AUTH] Mock login - bypassing authentication');
             this.router.navigate(['/map']);
@@ -67,10 +67,10 @@ export class AuthService {
             
             if (req) {
                 console.log('[AUTH] Calling loginRedirect with request');
-                return this.msal.loginRedirect({...req});
+                this.msal.loginRedirect({...req});
             } else {
                 console.log('[AUTH] Calling loginRedirect without request');
-                return this.msal.loginRedirect();
+                this.msal.loginRedirect();
             }
         } catch (error) {
             console.error('[AUTH] Error in login method:', error);
@@ -78,7 +78,7 @@ export class AuthService {
         }
     }
 
-    logout() {
+    logout(): void {
         if (!environment.enableMsal) {
             console.log('[AUTH] Mock logout');
             this.router.navigate(['/login']);
@@ -87,7 +87,7 @@ export class AuthService {
 
         console.log('[AUTH] Logout method called');
         if (this.msal) {
-            return this.msal.logoutRedirect();
+            this.msal.logoutRedirect();
         }
     }
 
