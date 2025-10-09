@@ -18,6 +18,7 @@ declare var google: any;
     <!-- Authentication Header -->
     <app-header 
       [userName]="userName()" 
+      (profile)="handleProfile()"
       (logout)="handleLogout()">
     </app-header>
 
@@ -173,6 +174,12 @@ export class MapPage implements AfterViewInit {
     } else {
       this.userName.set('Usuario');
     }
+  }
+
+  protected handleProfile(): void {
+    // TODO: Navigate to profile page or open profile modal
+    console.log('Profile clicked');
+    // Example: this.router.navigate(['/profile']);
   }
 
   protected handleLogout(): void {

@@ -46,6 +46,34 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.profile-icon-button {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  color: #ED1B24;
+}
+
+.profile-icon-button:hover {
+  background: rgba(237, 27, 36, 0.1);
+  transform: scale(1.1);
+}
+
+.profile-icon-button:active {
+  transform: scale(0.95);
+}
+
+.profile-icon-button svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
 .logout-button {
   background: #dc3545;
   color: white;
@@ -81,6 +109,15 @@
   
   .welcome-text {
     font-size: 12px;
+  }
+  
+  .profile-icon-button svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .profile-icon-button {
+    padding: 4px;
   }
   
   .logout-button {
