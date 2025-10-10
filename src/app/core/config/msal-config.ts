@@ -107,7 +107,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
     const protectResourceMap = new Map<string, Array<string>>();
-    // Add your API endpoints here when you have them
+    // Add API endpoints here if needed
     // protectResourceMap.set('https://your-api.com', ['https://your-api.com/access']);
     
     return {

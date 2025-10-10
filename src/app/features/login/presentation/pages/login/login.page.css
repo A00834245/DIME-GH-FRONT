@@ -4,7 +4,6 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  /* Background color is now handled globally in styles.css */
 }
 
 .login-card {
