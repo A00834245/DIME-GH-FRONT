@@ -21,5 +21,10 @@ export const routes: Routes = [
     canActivate: authGuard,
     loadChildren: () => import('@features/map/presentation/map.routes').then(m => m.MAP_ROUTES)
   },
+  {
+    path: 'profile',
+    canActivate: authGuard,
+    loadChildren: () => import('@features/profile/presentation/profile.routes').then(m => m.PROFILE_ROUTES)
+  },
   { path: '**', redirectTo: 'login' }
 ];

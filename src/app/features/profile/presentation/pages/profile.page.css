@@ -1,0 +1,256 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.profile-container {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+
+.profile-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Back Button */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.back-button:hover {
+  background: #f8f9fa;
+  transform: translateX(-4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.back-button svg {
+  display: block;
+}
+
+/* Profile Card */
+.profile-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.profile-header {
+  background: linear-gradient(135deg, #ED1B24 0%, #c41820 100%);
+  padding: 48px 32px;
+  text-align: center;
+  color: white;
+}
+
+.profile-icon-large {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  background: white;
+  border-radius: 50%;
+  margin-bottom: 24px;
+  color: #ED1B24;
+}
+
+.profile-icon-large svg {
+  width: 80px;
+  height: 80px;
+}
+
+.profile-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Profile Body */
+.profile-body {
+  padding: 32px;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #86868b;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.info-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1d1d1f;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Actions Section */
+.actions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.action-button {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.action-button.primary {
+  background: #ED1B24;
+  color: white;
+}
+
+.action-button.primary:hover {
+  background: #c41820;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(237, 27, 36, 0.3);
+}
+
+.action-button.secondary {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.action-button.secondary:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-container {
+    top: 50px;
+    padding: 20px 16px;
+  }
+
+  .profile-header {
+    padding: 32px 24px;
+  }
+
+  .profile-icon-large {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 16px;
+  }
+
+  .profile-icon-large svg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-title {
+    font-size: 24px;
+  }
+
+  .profile-body {
+    padding: 24px;
+  }
+
+  .info-section {
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .info-item {
+    padding-bottom: 20px;
+  }
+
+  .back-button {
+    padding: 8px 16px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 16px 12px;
+  }
+
+  .profile-header {
+    padding: 24px 16px;
+  }
+
+  .profile-icon-large {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-icon-large svg {
+    width: 50px;
+    height: 50px;
+  }
+
+  .profile-title {
+    font-size: 20px;
+  }
+
+  .profile-body {
+    padding: 20px 16px;
+  }
+
+  .info-value {
+    font-size: 14px;
+  }
+
+  .action-button {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+

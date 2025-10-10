@@ -177,9 +177,7 @@ export class MapPage implements AfterViewInit {
   }
 
   protected handleProfile(): void {
-    // TODO: Navigate to profile page or open profile modal
-    console.log('Profile clicked');
-    // Example: this.router.navigate(['/profile']);
+    this.router.navigate(['/profile']);
   }
 
   protected handleLogout(): void {

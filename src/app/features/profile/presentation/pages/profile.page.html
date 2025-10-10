@@ -1,0 +1,58 @@
+<app-header 
+  [userName]="userName()" 
+  (profile)="handleProfile()"
+  (logout)="handleLogout()">
+</app-header>
+
+<div class="profile-container">
+  <div class="profile-content">
+    <!-- Back Button -->
+    <button class="back-button" (click)="goBack()" type="button">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Volver al mapa
+    </button>
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="profile-icon-large">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="12" cy="9" r="3" fill="currentColor"/>
+            <path d="M6 19.5C6 16.4624 8.46243 14 11.5 14H12.5C15.5376 14 18 16.4624 18 19.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="profile-title">Perfil de Usuario</h1>
+      </div>
+
+      <div class="profile-body">
+        <div class="info-section">
+          <div class="info-item">
+            <label class="info-label">Nombre</label>
+            <div class="info-value">{{ userName() }}</div>
+          </div>
+
+          <div class="info-item">
+            <label class="info-label">Correo Electrónico</label>
+            <div class="info-value">{{ userEmail() }}</div>
+          </div>
+
+          <div class="info-item">
+            <label class="info-label">Rol</label>
+            <div class="info-value">{{ userRole() }}</div>
+          </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="actions-section">
+          <button class="action-button secondary" (click)="goBack()" type="button">
+            Volver al Mapa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
