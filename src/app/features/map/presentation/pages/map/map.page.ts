@@ -18,8 +18,7 @@ declare var google: any;
     <!-- Authentication Header -->
     <app-header 
       [userName]="userName()" 
-      (profile)="handleProfile()"
-      (logout)="handleLogout()">
+      (profile)="handleProfile()">
     </app-header>
 
     <!-- Map Container -->

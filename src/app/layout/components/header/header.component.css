@@ -74,25 +74,6 @@
   height: 28px;
 }
 
-.logout-button {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.logout-button:hover {
-  background: #c82333;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-}
-
 /* Responsive adjustments for mobile */
 @media (max-width: 768px) {
   .map-header {
@@ -118,11 +99,6 @@
   
   .profile-icon-button {
     padding: 4px;
-  }
-  
-  .logout-button {
-    padding: 6px 12px;
-    font-size: 12px;
   }
 }
 

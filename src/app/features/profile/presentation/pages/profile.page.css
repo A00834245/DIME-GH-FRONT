@@ -136,7 +136,7 @@
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.action-button {
+.logout-button {
   width: 100%;
   padding: 14px 24px;
   border: none;
@@ -146,29 +146,23 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.action-button.primary {
   background: #ED1B24;
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.action-button.primary:hover {
+.logout-button:hover {
   background: #c41820;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(237, 27, 36, 0.3);
 }
 
-.action-button.secondary {
-  background: #f8f9fa;
-  color: #333;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.action-button.secondary:hover {
-  background: #e9ecef;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.logout-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(237, 27, 36, 0.3);
 }
 
 /* Responsive Design */
@@ -215,6 +209,11 @@
     font-size: 13px;
     margin-bottom: 16px;
   }
+
+  .logout-button {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -248,7 +247,7 @@
     font-size: 14px;
   }
 
-  .action-button {
+  .logout-button {
     padding: 12px 20px;
     font-size: 14px;
   }

@@ -20,9 +20,6 @@ import { NgIf } from '@angular/common';
               <path d="M6 19.5C6 16.4624 8.46243 14 11.5 14H12.5C15.5376 14 18 16.4624 18 19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
-          <button class="logout-button" (click)="onLogout()" type="button">
-            Cerrar Sesión
-          </button>
         </div>
       </div>
     </header>
@@ -33,14 +30,9 @@ export class HeaderComponent {
   @Input() logoPath: string = '/images/AC.MX_logo.png';
   @Input() userName: string = 'Usuario';
   @Output() profile = new EventEmitter<void>();
-  @Output() logout = new EventEmitter<void>();
 
   protected onProfile(): void {
     this.profile.emit();
-  }
-
-  protected onLogout(): void {
-    this.logout.emit();
   }
 }
 

@@ -15,6 +15,7 @@ export class ProfilePage implements OnInit {
   protected readonly userName = signal<string>('');
   protected readonly userEmail = signal<string>('');
   protected readonly userRole = signal<string>('');
+  protected readonly userDepartment = signal<string>('');
 
   constructor(
     private readonly authService: AuthService,
@@ -32,10 +33,12 @@ export class ProfilePage implements OnInit {
       this.userEmail.set(user.username || 'No disponible');
       // You can add more user properties as needed
       this.userRole.set('Usuario'); // Replace with actual role if available
+      this.userDepartment.set('No disponible'); // Replace with actual department if available
     } else {
       this.userName.set('Usuario');
       this.userEmail.set('No disponible');
       this.userRole.set('Usuario');
+      this.userDepartment.set('No disponible');
     }
   }
 
