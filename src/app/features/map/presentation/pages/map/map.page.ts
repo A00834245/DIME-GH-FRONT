@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { environment } from '@core/environments/environment';
 import { DatasetService } from '@features/map/core/services/dataset.service';
 import { AuthService } from '@core/services/auth.service';
-import { MsalService } from '@azure/msal-angular';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import { HeaderComponent } from '@layout/components/header/header.component';
 
 // Declare google as any to avoid TypeScript errors
 declare var google: any;
@@ -13,22 +13,13 @@ declare var google: any;
 @Component({
   selector: 'app-map-page',
   standalone: true,
-  imports: [NgIf, NgFor],
+  imports: [NgIf, NgFor, HeaderComponent],
   template: `
     <!-- Authentication Header -->
-    <header class="map-header">
-      <div class="header-content">
-        <div class="logo-container">
-          <img [src]="logoPath" alt="Logo de la empresa" class="company-logo" />
-        </div>
-        <div class="user-info">
-          <span class="welcome-text">Bienvenido, {{ userName() }}</span>
-          <button class="logout-button" (click)="logout()" type="button">
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    </header>
+    <app-header 
+      [userName]="userName()" 
+      (profile)="handleProfile()">
+    </app-header>
 
     <!-- Map Container -->
     <div class="map-container">
@@ -117,7 +108,6 @@ export class MapPage implements AfterViewInit {
   @ViewChild('searchInput', { static: true }) searchInput!: ElementRef;
   
   // Authentication properties
-  protected readonly logoPath = '/images/AC.MX_logo.png';
   protected readonly userName = signal<string>('');
   
   // Map properties
@@ -147,8 +137,7 @@ export class MapPage implements AfterViewInit {
     @Inject(PLATFORM_ID) private platformId: Object,
     private datasetService: DatasetService,
     private authService: AuthService,
-    private router: Router,
-    private msalService: MsalService
+    private router: Router
   ) {}
   
   ngAfterViewInit(): void {
@@ -178,14 +167,19 @@ export class MapPage implements AfterViewInit {
 
   // Authentication methods
   private loadUserInfo(): void {
-    const accounts = this.msalService.instance.getAllAccounts();
-    if (accounts.length > 0) {
-      const account = accounts[0];
-      this.userName.set(account.name || account.username || 'Usuario');
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.userName.set(user.name || user.username || 'Usuario');
+    } else {
+      this.userName.set('Usuario');
     }
   }
 
-  protected logout(): void {
+  protected handleProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  protected handleLogout(): void {
     this.authService.logout();
   }
 

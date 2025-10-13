@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, importProvidersFrom, Provider } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -22,16 +22,20 @@ import {
   MSALGuardConfigFactory,
   MSALInterceptorConfigFactory,
 } from '@core/config/msal-config';
+import { environment } from '@core/environments/environment';
 
+/**
+ * Returns MSAL providers only if MSAL is enabled in environment
+ * Otherwise returns empty array to bypass authentication
+ */
+function getMsalProviders(): Provider[] {
+  if (!environment.enableMsal) {
+    console.log('[APP CONFIG] MSAL is disabled - using bypass mode for development');
+    return [];
+  }
 
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(routes), 
-    provideClientHydration(withEventReplay()),
-    provideHttpClient(withInterceptorsFromDi()),
-    
+  console.log('[APP CONFIG] MSAL is enabled - configuring authentication');
+  return [
     // MSAL Configuration
     {
       provide: MSAL_INSTANCE, 
@@ -58,5 +62,18 @@ export const appConfig: ApplicationConfig = {
     MsalService,
     MsalGuard,
     MsalBroadcastService,
+  ];
+}
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(routes), 
+    provideClientHydration(withEventReplay()),
+    provideHttpClient(withInterceptorsFromDi()),
+    
+    // Conditionally include MSAL providers
+    ...getMsalProviders(),
   ]
 };
