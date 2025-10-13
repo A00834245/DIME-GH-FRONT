@@ -74,7 +74,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             knownAuthorities: environment.msal.knownAuthorities,
         },
         cache: {
-            cacheLocation: BrowserCacheLocation.LocalStorage,
+            cacheLocation: BrowserCacheLocation.SessionStorage,
             storeAuthStateInCookie: false,
         },
         system: {
@@ -97,7 +97,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     const config: MsalGuardConfiguration = {
         interactionType: InteractionType.Redirect,
         authRequest: { 
-            scopes: ['openid', 'profile', 'offline_access']
+            scopes: ['openid', 'profile', 'offline_access'],
+            prompt: 'login'
         },
         loginFailedRoute: '/login',
     };

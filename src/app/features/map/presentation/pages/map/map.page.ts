@@ -167,9 +167,10 @@ export class MapPage implements AfterViewInit {
 
   // Authentication methods
   private loadUserInfo(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.userName.set(user.name || user.username || 'Usuario');
+    const claims: any | null = this.authService.getIdTokenClaims();
+    if (claims) {
+      const name = claims.name || `${claims.given_name || ''} ${claims.family_name || ''}`.trim();
+      this.userName.set(name || claims.preferred_username || 'Usuario');
     } else {
       this.userName.set('Usuario');
     }

@@ -124,4 +124,36 @@ export class AuthService {
         console.log('[AUTH] getCurrentUser:', user);
         return user;
     }
+
+    /**
+     * Returns the idTokenClaims from the active account (or first available),
+     * which is the canonical source for user identity claims (name, email, roles, etc.).
+     */
+    getIdTokenClaims(): any | null {
+        if (!environment.enableMsal) {
+            // Provide mock claims in bypass mode for consistent UI behavior
+            return {
+                name: this.mockUser.name,
+                preferred_username: this.mockUser.username,
+                oid: this.mockUser.localAccountId,
+            };
+        }
+
+        if (!this.msal) {
+            console.log('[AUTH] MSAL not available, returning null claims');
+            return null;
+        }
+
+        const active = this.msal.instance.getActiveAccount();
+        if (active?.idTokenClaims) {
+            return active.idTokenClaims as any;
+        }
+
+        const accounts = this.msal.instance.getAllAccounts();
+        if (accounts.length > 0) {
+            return (accounts[0].idTokenClaims || null) as any;
+        }
+
+        return null;
+    }
 }

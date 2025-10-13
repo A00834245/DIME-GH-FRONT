@@ -27,13 +27,15 @@ export class ProfilePage implements OnInit {
   }
 
   private loadUserInfo(): void {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.userName.set(user.name || user.username || 'Usuario');
-      this.userEmail.set(user.username || 'No disponible');
-      // You can add more user properties as needed
-      this.userRole.set('Usuario'); // Replace with actual role if available
-      this.userDepartment.set('No disponible'); // Replace with actual department if available
+    const claims: any | null = this.authService.getIdTokenClaims();
+    if (claims) {
+      const name = claims.name || `${claims.given_name || ''} ${claims.family_name || ''}`.trim();
+      const email = claims.email || claims.preferred_username || 'No disponible';
+      this.userName.set(name || 'Usuario');
+      this.userEmail.set(email);
+      // Defaults for now; can be mapped from roles/dept claims in the future
+      this.userRole.set('Usuario');
+      this.userDepartment.set('No disponible');
     } else {
       this.userName.set('Usuario');
       this.userEmail.set('No disponible');
