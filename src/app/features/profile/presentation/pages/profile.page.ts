@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { HeaderComponent } from '@layout/components/header/header.component';
+import { BottomSheetComponent } from '@shared/components/bottom-sheet/bottom-sheet.component';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
+  imports: [CommonModule, HeaderComponent, BottomSheetComponent],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.css'
 })
@@ -16,6 +17,7 @@ export class ProfilePage implements OnInit {
   protected readonly userEmail = signal<string>('');
   protected readonly userRole = signal<string>('');
   protected readonly userDepartment = signal<string>('');
+  protected readonly showLogoutModal = signal<boolean>(false);
 
   constructor(
     private readonly authService: AuthService,
@@ -33,7 +35,7 @@ export class ProfilePage implements OnInit {
       const email = claims.email || claims.preferred_username || 'No disponible';
       this.userName.set(name || 'Usuario');
       this.userEmail.set(email);
-      // Defaults for now; can be mapped from roles/dept claims in the future
+      // Defaults for now; can be mapped from roles and department claims in the future
       this.userRole.set('Usuario');
       this.userDepartment.set('No disponible');
     } else {
@@ -50,7 +52,16 @@ export class ProfilePage implements OnInit {
   }
 
   protected handleLogout(): void {
+    this.showLogoutModal.set(true);
+  }
+
+  protected confirmLogout(): void {
+    this.showLogoutModal.set(false);
     this.authService.logout();
+  }
+
+  protected cancelLogout(): void {
+    this.showLogoutModal.set(false);
   }
 
   protected goBack(): void {

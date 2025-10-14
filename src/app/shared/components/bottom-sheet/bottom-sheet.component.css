@@ -1,0 +1,183 @@
+/* Bottom Sheet Overlay */
+.bottom-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Bottom Sheet Container */
+.bottom-sheet-container {
+  background: white;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Handle Bar */
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  background-color: #d1d5db;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+  flex-shrink: 0;
+}
+
+/* Header */
+.bottom-sheet-header {
+  padding: 16px 24px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+}
+
+/* Content */
+.bottom-sheet-content {
+  padding: 24px;
+  flex: 0 1 auto;
+  overflow-y: auto;
+}
+
+.bottom-sheet-message {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #4b5563;
+  text-align: center;
+}
+
+/* Actions */
+.bottom-sheet-actions {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: white;
+  border-top: 1px solid #f3f4f6;
+}
+
+.bottom-sheet-button {
+  flex: 1;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-button {
+  background-color: #ef4444;
+  color: white;
+  order: 1;
+}
+
+.confirm-button:hover {
+  background-color: #dc2626;
+}
+
+.confirm-button:active {
+  background-color: #b91c1c;
+  transform: scale(0.98);
+}
+
+.cancel-button {
+  background-color: #f3f4f6;
+  color: #374151;
+  order: 2;
+}
+
+.cancel-button:hover {
+  background-color: #e5e7eb;
+}
+
+.cancel-button:active {
+  background-color: #d1d5db;
+  transform: scale(0.98);
+}
+
+/* Tablet and Desktop - Side by side buttons */
+@media (min-width: 640px) {
+  .bottom-sheet-actions {
+    flex-direction: row;
+  }
+  
+  .confirm-button {
+    order: 2;
+  }
+  
+  .cancel-button {
+    order: 1;
+  }
+}
+
+/* Prevent body scroll when modal is open */
+body.bottom-sheet-open {
+  overflow: hidden;
+}
+
+/* Accessibility - Focus states */
+.bottom-sheet-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Touch optimizations for mobile */
+@media (hover: none) {
+  .bottom-sheet-button:active {
+    opacity: 0.8;
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-sheet-actions {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+}
+
