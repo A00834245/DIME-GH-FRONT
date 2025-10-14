@@ -53,7 +53,7 @@
 /* Category Filter Boxes - Horizontal Layout - adjusted for header */
 .category-filters {
   position: absolute;
-  top: 75px; /* Adjusted for header */
+  top: 65px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -225,6 +225,58 @@
   border-radius: 12px;
   min-width: 18px;
   text-align: center;
+}
+
+/* Full-screen map container - adjusted for header */
+.map-container {
+  position: fixed;
+  top: 60px; /* Account for header height */
+  left: 0;
+  height: calc(100vh - 60px);
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Search box overlay */
+.search-box {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: calc(100% - 30px);
+  max-width: 400px;
+  min-width: 250px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 25px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 400;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.search-input:focus {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+  color: #86868b;
+  font-weight: 400;
 }
 
 /* Search results dropdown */
@@ -402,11 +454,11 @@
   
   .category-filters {
     gap: 6px;
-    top: 85px; /* Increased for header space */
+    top: 75px;
   }
 }
 
-/* Responsive adjustments for mobile */
+/* Responsive adjustments - preserve existing mobile styles */
 @media (max-width: 768px) {
   .map-container {
     top: 50px;
@@ -420,7 +472,7 @@
   }
   
   .category-filters {
-    top: 65px;
+    top: 60px;
     width: calc(100% - 20px);
     max-width: none;
     gap: 8px;
@@ -453,7 +505,7 @@
   }
   
   .category-filters {
-    top: 60px;
+    top: 55px;
     width: calc(100% - 16px);
     gap: 6px;
   }
