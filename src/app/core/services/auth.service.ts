@@ -87,7 +87,20 @@ export class AuthService {
 
         console.log('[AUTH] Logout method called');
         if (this.msal) {
-            this.msal.logoutRedirect();
+            try {
+                const instance = this.msal.instance;
+                const active = instance.getActiveAccount();
+                const accounts = instance.getAllAccounts();
+                const account = active || (accounts.length > 0 ? accounts[0] : undefined);
+                this.msal.logoutRedirect({
+                    account,
+                    postLogoutRedirectUri: environment.msal.postLogoutRedirectUri
+                });
+            } catch (error) {
+                console.error('[AUTH] Error during logoutRedirect:', error);
+                // Fallback: navigate to login even if logout fails
+                this.router.navigate(['/login']);
+            }
         }
     }
 
