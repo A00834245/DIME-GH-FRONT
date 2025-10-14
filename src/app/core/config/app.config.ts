@@ -26,7 +26,7 @@ import { environment } from '@core/environments/environment';
 
 /**
  * Returns MSAL providers only if MSAL is enabled in environment
- * Otherwise returns empty array to bypass authentication
+ * Otherwise returns empty array to bypass authentication for development
  */
 function getMsalProviders(): Provider[] {
   if (!environment.enableMsal) {

@@ -66,3 +66,6 @@ MSAL-BYPASS-SUMMARY.md
 UNSAVED-CHANGES-GUIDE.md
 UNSAVED-CHANGES-TEST-EXAMPLE.md
 FOCUS-TRAP-DOCUMENTATION.md
+
+# Debug components (development only)
+src/app/debug/environment-debug.component.ts
