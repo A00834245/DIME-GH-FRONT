@@ -68,8 +68,8 @@
 <!-- Logout Confirmation Modal -->
 <app-bottom-sheet
   [isOpen]="showLogoutModal()"
-  title="Cerrar Sesión"
-  message="¿Estás seguro de que deseas cerrar sesión?"
+  [title]="logoutModalTitle()"
+  [message]="logoutModalMessage()"
   confirmText="Confirmar"
   cancelText="Cancelar"
   (confirm)="confirmLogout()"

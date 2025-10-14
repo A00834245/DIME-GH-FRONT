@@ -9,8 +9,7 @@ export const environment = {
   enableMsal: true,
   msal: {
     clientId: process.env['NG_APP_AZURE_CLIENT_ID'] || '',
-    // authority: `https://${process.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${process.env['NG_APP_AZURE_TENANT_NAME']}/${process.env['NG_APP_AZURE_LOGIN_USER_FLOW']}`,
-    authority: 'https://login.microsoftonline.com/0b542b3a-1d71-47b8-a4c4-542cb8ff5591',
+    authority: `https://${process.env['NG_APP_AZURE_AUTHORITY']}/${process.env['NG_APP_AZURE_TENANT_NAME']}`,
     redirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
     postLogoutRedirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
     knownAuthorities: [process.env['NG_APP_AZURE_AUTHORITY_DOMAIN'] || '']

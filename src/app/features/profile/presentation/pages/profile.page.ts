@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { UnsavedChangesService } from '@core/services/unsaved-changes.service';
 import { HeaderComponent } from '@layout/components/header/header.component';
 import { BottomSheetComponent } from '@shared/components/bottom-sheet/bottom-sheet.component';
 
@@ -18,9 +19,23 @@ export class ProfilePage implements OnInit {
   protected readonly userRole = signal<string>('');
   protected readonly userDepartment = signal<string>('');
   protected readonly showLogoutModal = signal<boolean>(false);
+  
+  // Computed signals for modal content based on unsaved changes
+  protected readonly logoutModalTitle = computed(() => 
+    this.unsavedChangesService.hasUnsavedChanges() 
+      ? 'Cambios sin Guardar' 
+      : 'Cerrar Sesión'
+  );
+  
+  protected readonly logoutModalMessage = computed(() => 
+    this.unsavedChangesService.hasUnsavedChanges()
+      ? 'Tienes cambios sin guardar. Si cierras sesión ahora, se perderán todos los cambios no guardados. ¿Estás seguro de que deseas continuar?'
+      : '¿Estás seguro de que deseas cerrar sesión?'
+  );
 
   constructor(
     private readonly authService: AuthService,
+    private readonly unsavedChangesService: UnsavedChangesService,
     private readonly router: Router
   ) {}
 
