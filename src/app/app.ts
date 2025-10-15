@@ -94,6 +94,39 @@ export class App implements OnInit, OnDestroy {
         this.showToast('We could not sign you in. Please contact support.');
         this.router.navigate(['/login']);
       });
+
+    // Listen for LOGOUT_SUCCESS
+    this.msalBroadcastService.msalSubject$
+      .pipe(
+        filter((msg: EventMessage) => msg.eventType === EventType.LOGOUT_SUCCESS),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.router.navigate(['/login']);
+      });
+
+    // Listen for LOGOUT_FAILURE
+    this.msalBroadcastService.msalSubject$
+      .pipe(
+        filter((msg: EventMessage) => msg.eventType === EventType.LOGOUT_FAILURE),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((msg: EventMessage) => {
+        console.error('LOGOUT_FAILURE:', msg);
+        const retry = confirm('Sign-out failed. Retry sign-out? Click Cancel for emergency local sign-out.');
+        if (retry) {
+          // Reattempt logout via redirect
+          try {
+            this.authService?.logoutRedirect && (this.authService as any).logoutRedirect();
+          } catch {
+            // Fallback to navigating to login
+            this.router.navigate(['/login']);
+          }
+        } else {
+          // Emergency local sign-out: hard redirect to login route
+          this.router.navigate(['/login']);
+        }
+      });
   }
 
   ngOnDestroy(): void {
