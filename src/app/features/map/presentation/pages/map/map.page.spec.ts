@@ -270,6 +270,180 @@ describe('MapPage', () => {
     expect(getColor('Cliente')).toBe('#ED1B24');
     expect(getColor('Unknown')).toBe('#007FFF');
   });
+
+  it('should count markers by category and return counts', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    component.allFeatures = [
+      { properties: { Category: 'CEDI' } },
+      { properties: { category: 'Cliente' } },
+      { properties: { Name: 'No Category' } },
+    ];
+
+    (component as any).countMarkersByCategory();
+
+    expect(component.getCategoryCount('CEDI')).toBe(1);
+    expect(component.getCategoryCount('Cliente')).toBe(1);
+    // Default maps to 'Estacionamiento' when missing
+    expect(component.getCategoryCount('Estacionamiento')).toBe(1);
+  });
+
+  it('should not crash updateMarkerClustering when clusterer is null', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    component.visibleCategories = new Set<string>(['CEDI']);
+    component.markersByCategory = new Map<string, any[]>([['CEDI', [{}, {}] as any]]);
+
+    component.markerClusterer = null;
+    expect(() => (component as any).updateMarkerClustering()).not.toThrow();
+  });
+
+  it('should set all markers to invisible when no visible categories', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    const m1 = { setVisible: jasmine.createSpy('setVisible') };
+    const m2 = { setVisible: jasmine.createSpy('setVisible') };
+    component.markersByCategory = new Map<string, any[]>([
+      ['CEDI', [m1 as any]],
+      ['Cliente', [m2 as any]]
+    ]);
+    component.visibleCategories = new Set<string>();
+
+    // Stub clusterer to observe empty addMarkers
+    component.markerClusterer = {
+      clearMarkers: jasmine.createSpy('clearMarkers'),
+      addMarkers: jasmine.createSpy('addMarkers')
+    };
+
+    (component as any).updateMarkerVisibility();
+    expect(m1.setVisible).toHaveBeenCalledWith(false);
+    expect(m2.setVisible).toHaveBeenCalledWith(false);
+    expect(component.markerClusterer.clearMarkers).toHaveBeenCalled();
+    const addArg = component.markerClusterer.addMarkers.calls.mostRecent().args[0] as any[];
+    expect(addArg.length).toBe(0);
+  });
+
+  it('should not adjust viewport when no markers are visible', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    stubGoogleAndMapForBounds(component, { zoom: 12 });
+    component.visibleCategories = new Set<string>(['CEDI']);
+    component.markersByCategory = new Map<string, any[]>([['CEDI', []]]);
+
+    (component as any).adjustViewportToVisibleMarkers();
+    expect(component.map.fitBounds).not.toHaveBeenCalled();
+    expect(component.map.setZoom).not.toHaveBeenCalled();
+  });
+
+  it('should set zoom to minimum 10 when current zoom is lower', fakeAsync(() => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    // getZoom returns 8 (< 10)
+    (window as any).google = {
+      maps: {
+        LatLngBounds: function () {
+          return { extend: jasmine.createSpy('extend') };
+        }
+      }
+    };
+    component.map = {
+      fitBounds: jasmine.createSpy('fitBounds'),
+      getZoom: jasmine.createSpy('getZoom').and.returnValue(8),
+      setZoom: jasmine.createSpy('setZoom')
+    };
+    const marker = { getPosition: () => ({ lat: 1, lng: 1 }) } as any;
+    component.visibleCategories = new Set<string>(['CEDI']);
+    component.markersByCategory = new Map<string, any[]>([['CEDI', [marker]]]);
+
+    (component as any).adjustViewportToVisibleMarkers();
+    tick(120);
+    expect(component.map.fitBounds).toHaveBeenCalled();
+    expect(component.map.setZoom).toHaveBeenCalledWith(10);
+  }));
+
+  it('getUserLocationAndCenter should fall back to showUserLocationOnMap on error', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    // Stub geolocation to error via property spy
+    const geoStub = {
+      getCurrentPosition: (_success: any, error: any) => error(new Error('denied'))
+    } as any;
+    spyOnProperty(window.navigator, 'geolocation', 'get').and.returnValue(geoStub);
+
+    const fallbackSpy = spyOn<any>(component, 'showUserLocationOnMap').and.stub();
+    (component as any).getUserLocationAndCenter();
+    expect(fallbackSpy).toHaveBeenCalled();
+  });
+
+  it('showUserLocationOnMap should center and zoom when within bounds', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    // Stub Google Maps constructors and constants
+    (window as any).google = {
+      maps: {
+        SymbolPath: { CIRCLE: 0 },
+        Marker: function () { return {}; },
+        Circle: function () { return {}; },
+      }
+    };
+
+    // Stub map with options and methods
+    component.map = {
+      setCenter: jasmine.createSpy('setCenter'),
+      setZoom: jasmine.createSpy('setZoom'),
+      getOptions: () => ({
+        restriction: {
+          latLngBounds: { north: 26, south: 24, west: -101, east: -99 }
+        }
+      })
+    };
+
+    // Stub geolocation success via property spy
+    const geoStub = {
+      getCurrentPosition: (success: any) => success({ coords: { latitude: 25, longitude: -100, accuracy: 50 } })
+    } as any;
+    spyOnProperty(window.navigator, 'geolocation', 'get').and.returnValue(geoStub);
+
+    (component as any).showUserLocationOnMap();
+    expect(component.map.setCenter).toHaveBeenCalled();
+    expect(component.map.setZoom).toHaveBeenCalledWith(14);
+  });
+
+  it('lightenColor should return valid hex and lighten shades', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    expect((component as any).lightenColor('#000000', 20)).toBe('#333333');
+    const c = (component as any).lightenColor('#4285F4', 20);
+    expect(c.startsWith('#')).toBeTrue();
+    expect(c.length).toBe(7);
+  });
+
+  it('getCategoryIcon should return the correct icon markup', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = createComponent();
+    const component = fixture.componentInstance as any;
+
+    expect(((component as any).getCategoryIcon('Estacionamiento') as string)).toContain('🅿️');
+    expect(((component as any).getCategoryIcon('CEDI') as string)).toContain('📦');
+    expect(((component as any).getCategoryIcon('Cliente') as string)).toContain('🏢');
+    expect(((component as any).getCategoryIcon('Otro') as string)).toContain('📍');
+  });
 });
 
 
