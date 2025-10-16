@@ -444,6 +444,426 @@ describe('MapPage', () => {
     expect(((component as any).getCategoryIcon('Cliente') as string)).toContain('🏢');
     expect(((component as any).getCategoryIcon('Otro') as string)).toContain('📍');
   });
+
+  // ---------------------------
+  // Browser init and map boot
+  // ---------------------------
+  it('ngAfterViewInit in browser should load script then initialize map', fakeAsync(() => {
+    setClaims({ name: 'Alice' });
+    TestBed.overrideProvider(PLATFORM_ID, { useValue: 'browser' });
+
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    spyOn(component, 'loadGoogleMapsScript').and.returnValue(Promise.resolve());
+    const initSpy = spyOn(component, 'initializeMap').and.stub();
+
+    fixture.detectChanges(); // triggers ngAfterViewInit
+    tick();
+    expect(initSpy).toHaveBeenCalled();
+  }));
+
+  it('loadGoogleMapsScript resolves when script onload fires', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    (window as any).google = undefined; // ensure path that appends script
+    const appendSpy = spyOn(document.head, 'appendChild').and.callFake((el: any) => {
+      setTimeout(() => el.onload && el.onload(new Event('load')));
+      return el;
+    });
+
+    await expectAsync((component as any).loadGoogleMapsScript()).toBeResolved();
+    expect(appendSpy).toHaveBeenCalled();
+  });
+
+  it('loadGoogleMapsScript rejects when script onerror fires', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    (window as any).google = undefined;
+    spyOn(document.head, 'appendChild').and.callFake((el: any) => {
+      setTimeout(() => el.onerror && el.onerror(new Event('error')));
+      return el;
+    });
+
+    await expectAsync((component as any).loadGoogleMapsScript()).toBeRejected();
+  });
+
+  // --------------------------------
+  // Map initialization and events
+  // --------------------------------
+  it('initializeMap happy path wires idle and tilesloaded listeners', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    // Stub google maps core
+    (window as any).google = {
+      maps: {
+        importLibrary: async (lib: string) => {
+          if (lib === 'maps') {
+            return {
+              Map: function (_el: any, _opts: any) {
+                const mapObj: any = {
+                  _listeners: new Map<string, Function[]>(),
+                  controls: [ { push: jasmine.createSpy('push') } ],
+                  addListener: function (evt: string, cb: Function) {
+                    const arr: Function[] = this._listeners.get(evt) || [];
+                    arr.push(cb);
+                    this._listeners.set(evt, arr);
+                    return {} as any;
+                  },
+                  fire: function (evt: string) {
+                    const arr: Function[] = this._listeners.get(evt) || [];
+                    arr.forEach((fn: Function) => fn());
+                  },
+                  getZoom: () => 10,
+                  getCenter: () => ({ toString: () => '(0,0)' }),
+                  getOptions: () => ({ restriction: { latLngBounds: { north: 26, south: 24, west: -101, east: -99 }}})
+                };
+                return mapObj;
+              }
+            } as any;
+          }
+          if (lib === 'geocoding') { return { Geocoder: function() {} } as any; }
+          if (lib === 'places') { return { Autocomplete: function() {} } as any; }
+          return {} as any;
+        },
+        event: {
+          addListenerOnce: (_obj: any, _evt: string, cb: Function) => cb()
+        },
+        ControlPosition: { RIGHT_BOTTOM: 0 },
+        Size: function (w: number, h: number) { return { width: w, height: h } as any; },
+        Point: function (x: number, y: number) { return { x, y } as any; },
+        Marker: function (_opts: any) { const o: any = { ..._opts }; o.addListener = (_e: string, _cb: any) => {}; return o; },
+        InfoWindow: function (_opts: any) { return { open: () => {}, close: () => {}, addListener: (_e: string, _cb: any) => {} } as any; },
+        GeocoderStatus: { OK: 'OK' }
+      }
+    };
+
+    const locSpy = spyOn(component as any, 'getUserLocationAndCenter').and.stub();
+    const btnSpy = spyOn(component as any, 'enableLocationButton').and.stub();
+    const loadSpy = spyOn(component as any, 'loadDataFromBackend').and.stub();
+
+    await (component as any).initializeMap();
+    // idle listener should have called these
+    expect(locSpy).toHaveBeenCalled();
+    expect(btnSpy).toHaveBeenCalled();
+
+    // tilesloaded should load backend
+    (component as any).map.fire('tilesloaded');
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it('initializeMap catches importLibrary errors without crashing', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    (window as any).google = { maps: { importLibrary: async () => { throw new Error('boom'); } } } as any;
+
+    await (component as any).initializeMap();
+    expect((component as any).map).toBeUndefined();
+  });
+
+  // ----------------
+  // Dataset flow
+  // ----------------
+  it('loadDataFromBackend short-circuits when dataLoaded is true', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (component as any).dataLoaded = true;
+    const markerLoaderSpy = spyOn(component as any, 'loadColoredMarkersFromBackend').and.stub();
+
+    (component as any).loadDataFromBackend();
+    expect(markerLoaderSpy).not.toHaveBeenCalled();
+  });
+
+  it('loadDataFromBackend calls loader and sets flag when not loaded', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (component as any).dataLoaded = false;
+    const markerLoaderSpy = spyOn(component as any, 'loadColoredMarkersFromBackend').and.stub();
+
+    (component as any).loadDataFromBackend();
+    expect(markerLoaderSpy).toHaveBeenCalled();
+    expect((component as any).dataLoaded).toBeTrue();
+  });
+
+  // ------------------------------
+  // Markers and clustering
+  // ------------------------------
+  it('loadColoredMarkersFromBackend processes only Point features and sets clustering', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    // Stub google classes used by marker creation
+    (window as any).google = {
+      maps: {
+        Size: function (w: number, h: number) { return { width: w, height: h } as any; },
+        Point: function (x: number, y: number) { return { x, y } as any; },
+        Marker: function (opts: any) { const o: any = { ...opts, _handlers: {} }; o.addListener = (e: string, cb: any) => { o._handlers[e] = cb; }; return o; },
+        InfoWindow: function (_opts: any) { return { open: () => {}, close: () => {}, addListener: (_e: string, _cb: any) => {} } as any; },
+        SymbolPath: { CIRCLE: 0 },
+        GeocoderStatus: { OK: 'OK' }
+      }
+    };
+    (component as any).map = {};
+
+    // Dataset with mixed geometry types
+    const geojson = {
+      features: [
+        { geometry: { type: 'Point', coordinates: [ -100.0, 25.0 ] }, properties: { Category: 'CEDI', Name: 'Alfa' } },
+        { geometry: { type: 'Polygon', coordinates: [] }, properties: { Category: 'Cliente' } },
+        { geometry: { type: 'Point', coordinates: [ -100.2, 25.2 ] }, properties: { category: 'Cliente', Name: 'Beta' } },
+        { geometry: { type: 'LineString', coordinates: [] }, properties: {} }
+      ]
+    };
+
+    // Spy dataset fetch
+    datasetService.fetchDatasetFromBackend.and.returnValue(Promise.resolve(geojson));
+
+    // Avoid real clusterer creation; just set a stub when called
+    spyOn(component as any, 'setupMarkerClustering').and.callFake(function(this: any) {
+      this.markerClusterer = { clearMarkers: () => {}, addMarkers: () => {} } as any;
+    });
+
+    await (component as any).loadColoredMarkersFromBackend();
+
+    expect((component as any).allFeatures.length).toBe(2);
+    expect((component as any).markers.length).toBe(2);
+    expect((component as any).markersByCategory.get('CEDI')?.length).toBe(1);
+    expect((component as any).markersByCategory.get('Cliente')?.length).toBe(1);
+    expect((component as any).markerClusterer).not.toBeNull();
+  });
+
+  it('loadColoredMarkersFromBackend shows InfoWindow on dataset error and closes later', fakeAsync(() => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    let opened = false;
+    let closed = false;
+    (window as any).google = {
+      maps: {
+        InfoWindow: function (_opts: any) { return { open: () => { opened = true; }, close: () => { closed = true; }, addListener: (_e: string, _cb: any) => {} } as any; }
+      }
+    } as any;
+    (component as any).map = { getCenter: () => ({ lat: 0, lng: 0 }) };
+    datasetService.fetchDatasetFromBackend.and.returnValue(Promise.reject(new Error('fail')));
+
+    (component as any).loadColoredMarkersFromBackend();
+    tick(); // settle promise rejection path
+    expect(opened).toBeTrue();
+    tick(15000);
+    expect(closed).toBeTrue();
+  }));
+
+  // ---------------------------------------
+  // Marker creation and info windows
+  // ---------------------------------------
+  it('createColoredMarkerFromFeature categorizes markers and click shows centered info', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    (window as any).google = {
+      maps: {
+        Size: function (w: number, h: number) { return { width: w, height: h } as any; },
+        Point: function (x: number, y: number) { return { x, y } as any; },
+        Marker: function (_opts: any) { const o: any = { _handlers: {} }; o.addListener = (e: string, cb: any) => { o._handlers[e] = cb; }; return o; },
+        SymbolPath: { CIRCLE: 0 }
+      }
+    };
+    (component as any).map = {};
+
+    const spy = spyOn(component as any, 'showMarkerInfoWindowCentered').and.stub();
+
+    const features = [
+      { geometry: { type: 'Point', coordinates: [ -100, 25 ] }, properties: { Category: 'Estacionamiento', Name: 'P1' } },
+      { geometry: { type: 'Point', coordinates: [ -100, 25 ] }, properties: { Category: 'CEDI', Name: 'C1' } },
+      { geometry: { type: 'Point', coordinates: [ -100, 25 ] }, properties: { Category: 'Cliente', Name: 'CL1' } },
+      { geometry: { type: 'Point', coordinates: [ -100, 25 ] }, properties: { Name: 'Unknown' } },
+    ];
+
+    for (const f of features) { (component as any).createColoredMarkerFromFeature(f); }
+
+    expect((component as any).markers.length).toBe(4);
+    expect((component as any).markersByCategory.get('Estacionamiento')?.length).toBe(2);
+    expect((component as any).markersByCategory.get('CEDI')?.length).toBe(1);
+    expect((component as any).markersByCategory.get('Cliente')?.length).toBe(1);
+
+    // Simulate click via stored handlers if present
+    const markerAny = (component as any).markers[0] as any;
+    if (markerAny && markerAny._handlers && markerAny._handlers['click']) {
+      markerAny._handlers['click']();
+      expect(spy).toHaveBeenCalled();
+    }
+  });
+
+  it('showMarkerInfoWindowCentered pans first then opens detailed window with offset', fakeAsync(() => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    const mapStub = {
+      getBounds: () => ({
+        getNorthEast: () => ({ lat: () => 26 }),
+        getSouthWest: () => ({ lat: () => 24 })
+      }),
+      panTo: jasmine.createSpy('panTo')
+    };
+    (component as any).map = mapStub;
+
+    spyOn(component as any, 'getAddressFromCoordinates').and.returnValue(Promise.resolve('Mock Address'));
+    const detailedSpy = spyOn(component as any, 'createDetailedInfoWindow').and.stub();
+
+    (component as any).showMarkerInfoWindowCentered({}, { lat: 10, lng: 10 }, null);
+    // first pan should be to lat + 0.6 (since span=2, 30%)
+    expect(mapStub.panTo).toHaveBeenCalledWith({ lat: 10.6, lng: 10 });
+    tick(310);
+    // info window position should be lat + 0.08 (4% of 2)
+    const infoPos = (detailedSpy.calls.mostRecent().args[2]);
+    expect(infoPos.lat).toBeCloseTo(10.08, 5);
+  }));
+
+  it('showMarkerInfoWindow forwards to createDetailedInfoWindow', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    spyOn(component as any, 'getAddressFromCoordinates').and.returnValue(Promise.resolve('Mock Address'));
+    const detailedSpy = spyOn(component as any, 'createDetailedInfoWindow').and.stub();
+
+    await (component as any).showMarkerInfoWindow({ Name: 'X' }, { lat: 1, lng: 2 });
+    expect(detailedSpy).toHaveBeenCalled();
+  });
+
+  it('getAddressFromCoordinates returns formatted address on OK', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (window as any).google = { maps: { GeocoderStatus: { OK: 'OK' } } } as any;
+    (component as any).Geocoder = function () { return { geocode: (_opts: any, cb: Function) => cb([{ formatted_address: 'Addr' }], 'OK') } as any; } as any;
+
+    const addr = await (component as any).getAddressFromCoordinates({ lat: 1, lng: 2 });
+    expect(addr).toBe('Addr');
+  });
+
+  it('getAddressFromCoordinates returns fallback on non-OK', async () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (window as any).google = { maps: { GeocoderStatus: { OK: 'OK' } } } as any;
+    (component as any).Geocoder = function () { return { geocode: (_opts: any, cb: Function) => cb([], 'ZERO_RESULTS') } as any; } as any;
+
+    const addr = await (component as any).getAddressFromCoordinates({ lat: 1, lng: 2 });
+    expect(addr).toBe('Dirección no disponible');
+  });
+
+  // ---------------------
+  // Rendering helpers
+  // ---------------------
+  it('getClusterRenderer.render returns google.maps.Marker with expected icon sizing', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    (window as any).google = {
+      maps: {
+        Marker: function (opts: any) { return opts; },
+        Size: function (w: number, h: number) { return { width: w, height: h } as any; },
+        Point: function (x: number, y: number) { return { x, y } as any; }
+      }
+    };
+
+    const renderer = (component as any).getClusterRenderer();
+    const marker: any = renderer.render({ count: 5, position: { lat: 0, lng: 0 } }, null);
+    expect(marker.icon.scaledSize.width).toBe(40);
+    expect(marker.icon.scaledSize.height).toBe(40);
+    expect(marker.icon.anchor.x).toBe(20);
+    expect(marker.icon.anchor.y).toBe(20);
+  });
+
+  it('enableLocationButton adds control and recenters map on click', fakeAsync(() => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+
+    (window as any).google = { maps: { ControlPosition: { RIGHT_BOTTOM: 0 } } } as any;
+    const pushed: any[] = [];
+    const mapStub = {
+      controls: [ { push: (el: any) => pushed.push(el) } ],
+      setCenter: jasmine.createSpy('setCenter'),
+      setZoom: jasmine.createSpy('setZoom')
+    };
+    (component as any).map = mapStub;
+    (window as any).userLocation = { lat: 1, lng: 2 };
+
+    (component as any).enableLocationButton();
+    expect(pushed.length).toBe(1);
+    const btn: HTMLButtonElement = pushed[0];
+    // Before click, SVG path fill is #666 (default). After click it flashes to #4285F4 then reverts.
+    const pathBefore = btn.querySelector('path')!;
+    expect(pathBefore.getAttribute('fill')).toBe('#666');
+    btn.click();
+    expect(mapStub.setCenter).toHaveBeenCalledWith({ lat: 1, lng: 2 });
+    expect(mapStub.setZoom).toHaveBeenCalledWith(14);
+    const pathAfter = btn.querySelector('path')!;
+    expect(pathAfter.getAttribute('fill')).toBe('#4285F4');
+    tick(2000);
+    expect(pathAfter.getAttribute('fill')).toBe('#666');
+  }));
+
+  // -----------------------------
+  // Search and filters (edges)
+  // -----------------------------
+  it('performDatasetSearch returns empty when no features', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (component as any).allFeatures = [];
+    (component as any).visibleCategories = new Set<string>(['CEDI', 'Cliente', 'Estacionamiento']);
+    (component as any).performDatasetSearch('alpha');
+    expect((component as any).searchResults.length).toBe(0);
+  });
+
+  it('performDatasetSearch matches on Description, Person Responsable, and Phone', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (component as any).visibleCategories = new Set<string>(['CEDI', 'Cliente', 'Estacionamiento']);
+    (component as any).allFeatures = [
+      { geometry: { type: 'Point', coordinates: [0,0] }, properties: { Category: 'CEDI', Description: 'Alpha storage' } },
+      { geometry: { type: 'Point', coordinates: [0,0] }, properties: { category: 'Cliente', 'Person Responsable': 'Alpha Supervisor' } },
+      { geometry: { type: 'Point', coordinates: [0,0] }, properties: { Category: 'Estacionamiento', phone: '555-ALPHA' } }
+    ];
+    (component as any).performDatasetSearch('alpha');
+    expect((component as any).searchResults.length).toBe(3);
+  });
+
+  it('onSearchInput with empty string resets dropdown and state', () => {
+    setClaims({ name: 'Alice' });
+    const fixture = TestBed.createComponent(MapPage);
+    const component = fixture.componentInstance as any;
+    (component as any).searchResults = [{}, {}];
+    (component as any).selectedSearchIndex = 1;
+    (component as any).showSearchDropdown = true;
+    (component as any).hideButtonsWhileSearching = true;
+    (component as any).searchQuery = 'x';
+
+    (component as any).onSearchInput({ target: { value: '   ' } });
+    expect((component as any).searchResults.length).toBe(0);
+    expect((component as any).selectedSearchIndex).toBe(-1);
+    expect((component as any).showSearchDropdown).toBeFalse();
+    expect((component as any).hideButtonsWhileSearching).toBeFalse();
+    expect((component as any).searchQuery).toBe('');
+  });
 });
 
 
