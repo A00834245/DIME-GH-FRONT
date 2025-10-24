@@ -1,13 +1,20 @@
 # DIME Web Application
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.2. It provides an interactive map interface with custom marker clustering and category filtering functionality.
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.2. It provides a secure, authenticated interactive map interface with custom marker clustering and category filtering functionality.
 
 ## Quick Start
 
 1. **Install dependencies**: `npm install`
-2. **Set up environment variables**: Copy `.env.example` to `.env` and add your Google Maps and Azure B2C values
+2. **Set up environment variables**: Create a `.env` file in the project root and add your Google Maps and Azure AD B2C credentials (see [Environment Setup](#environment-setup) below)
 3. **Start the development server**: `npm start`
 4. **Open your browser** and go to `http://localhost:4200`
+5. **Authenticate**: You will be redirected to Azure AD B2C login to access the application
+
+## Authentication
+
+This application uses **Azure AD B2C** for authentication. All routes except the login page are protected and require authentication. Users must successfully authenticate through Azure AD B2C before accessing the map and profile features.
+
+**Important**: Authentication is always required. This ensures consistent security across all environments.
 
 ## Prerequisites
 
@@ -33,7 +40,7 @@ NG_APP_GOOGLE_PROJECT_ID=your_project_id
 NG_APP_AZURE_CLIENT_ID=your-client-id-from-azure-portal
 NG_APP_AZURE_AUTHORITY_DOMAIN=yourtenant.b2clogin.com
 NG_APP_AZURE_TENANT_NAME=yourtenant.onmicrosoft.com
-NG_APP_AZURE_LOGIN_USER_FLOW=B2C_1_signin
+NG_APP_AZURE_LOGIN_USER_FLOW=your_login_user_flow
 NG_APP_AZURE_REDIRECT_URI=http://localhost:4200/auth-callback
 ```
 
@@ -75,6 +82,7 @@ ng generate --help
 
 This application includes the following key features:
 
+- **Azure AD B2C Authentication**: Secure authentication using Microsoft Azure AD B2C with protected routes
 - **Interactive Google Maps Integration**: Fully integrated Google Maps with custom styling
 - **Custom Markers**: Three distinct marker types with professional SVG designs:
   - Parking markers (Blue pin with 'P' icon)
@@ -84,6 +92,7 @@ This application includes the following key features:
 - **Category Filtering**: Interactive filter boxes to show/hide marker categories with additive selection
 - **Responsive Design**: Optimized for different screen sizes and devices
 - **SVG Caching**: Optimized marker rendering with cached SVG templates
+- **Route Protection**: MsalGuard protects sensitive routes (map, profile) requiring authentication
 
 ## Available Scripts
 
@@ -136,16 +145,28 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ```
 src/
 ├── app/
-│   ├── components/
-│   │   └── map/              # Main map component with markers and filtering
-│   ├── services/             # Angular services for data and API calls
-│   ├── models/              # TypeScript interfaces and models
-│   └── app.component.*      # Root application component
-├── environments/
-│   ├── environment.ts       # Development environment configuration
-│   └── environment.prod.ts  # Production environment configuration
-├── assets/                  # Static assets (images, icons, etc.)
-└── styles.css              # Global styles
+│   ├── core/
+│   │   ├── config/
+│   │   │   ├── app.config.ts        # Application providers (including MSAL)
+│   │   │   ├── app.routes.ts        # Route configuration with MsalGuard
+│   │   │   └── msal-config.ts       # MSAL/Azure AD B2C configuration
+│   │   ├── environments/
+│   │   │   ├── environment.ts       # Development environment config
+│   │   │   └── environment.prod.ts  # Production environment config
+│   │   ├── guards/                  # Route guards (authentication)
+│   │   └── services/
+│   │       ├── auth.service.ts      # Authentication service (MSAL wrapper)
+│   │       └── logging.service.ts   # Logging service
+│   ├── features/
+│   │   ├── login/                   # Login page and authentication flow
+│   │   ├── map/                     # Map feature with markers and filtering
+│   │   └── profile/                 # User profile feature
+│   ├── layout/                      # Layout components (header, etc.)
+│   ├── shared/                      # Shared components and utilities
+│   ├── app.ts                       # Root application component
+│   └── app.html                     # Root template
+├── assets/                          # Static assets (images, icons, etc.)
+└── styles.css                       # Global styles
 ```
 
 ## Troubleshooting
@@ -154,24 +175,41 @@ See ENVIRONMENT-SETUP.md for Azure B2C specifics.
 
 ### Common Issues
 
+**Issue: Redirected to login immediately or unable to access map/profile**
+- Ensure your `.env` file contains all required Azure AD B2C credentials
+- Verify that the redirect URI in Azure portal matches your local URL (`http://localhost:4200`)
+- Check browser console for authentication errors
+- Ensure you have a valid user account in your Azure AD B2C tenant
+- Authentication is required - there is no bypass mode
+
+**Issue: "MSAL not available" or authentication errors**
+- Verify all Azure AD B2C environment variables are set correctly in `.env`
+- Ensure `NG_APP_AZURE_REDIRECT_URI` matches your current URL
+- Check that your Azure AD B2C application is properly configured
+- Verify user flow name matches the one configured in Azure portal
+
 **Issue: Google Maps not loading**
 - Ensure your `.env` file contains valid Google Maps API credentials
 - Verify that the Google Maps JavaScript API is enabled in your Google Cloud Console
 - Check that your API key has the necessary permissions
+- Note: You must authenticate first before accessing the map
 
 **Issue: Markers not appearing**
 - Verify that your Google Maps API key has access to the Maps JavaScript API
 - Check the browser console for any JavaScript errors
 - Ensure the map component is properly initialized
+- Ensure you are authenticated (authentication is required to view the map)
 
 **Issue: Build errors**
 - Run `npm install` to ensure all dependencies are installed
 - Clear the node_modules and reinstall: `rm -rf node_modules package-lock.json && npm install`
 - Check that all TypeScript files have proper syntax
+- Verify all environment variables are set (especially Azure AD B2C variables)
 
 **Issue: Port 4200 already in use**
 - Use a different port: `ng serve --port 4201`
 - Or stop other processes using port 4200
+- Remember to update `NG_APP_AZURE_REDIRECT_URI` if you change the port
 
 ## Getting Google Maps API Key
 
@@ -188,3 +226,6 @@ See ENVIRONMENT-SETUP.md for Azure B2C specifics.
 - [Angular Google Maps Documentation](https://github.com/angular/components/tree/main/src/google-maps)
 - [Google Maps JavaScript API Documentation](https://developers.google.com/maps/documentation/javascript)
 - [MarkerClusterer Documentation](https://googlemaps.github.io/js-markerclusterer/)
+- [Azure AD B2C Documentation](https://docs.microsoft.com/en-us/azure/active-directory-b2c/)
+- [MSAL Angular Documentation](https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/lib/msal-angular)
+
