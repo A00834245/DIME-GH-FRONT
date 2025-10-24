@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy, Inject, Optional, signal, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, signal, PLATFORM_ID } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfiguration } from '@azure/msal-angular';
 import { EventMessage, EventType, InteractionStatus, AuthenticationResult } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { environment } from '@core/environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -19,10 +18,10 @@ export class App implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   constructor(
-    @Optional() @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration | null,
+    @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
     @Inject(PLATFORM_ID) private platformId: Object,
-    @Optional() private authService: MsalService | null,
-    @Optional() private msalBroadcastService: MsalBroadcastService | null,
+    private authService: MsalService,
+    private msalBroadcastService: MsalBroadcastService,
     private router: Router,
   ) {}
 
@@ -35,18 +34,6 @@ export class App implements OnInit, OnDestroy {
     }
 
     this.isIframe = window !== window.parent && !window.opener;
-
-    // Skip MSAL setup if disabled
-    if (!environment.enableMsal) {
-      console.log('[APP] MSAL is disabled - skipping authentication setup');
-      return;
-    }
-
-    // Verify MSAL services are available
-    if (!this.msalBroadcastService || !this.authService) {
-      console.warn('[APP] MSAL services not available');
-      return;
-    }
 
     // Notify when MSAL interactions are done
     this.msalBroadcastService.inProgress$
@@ -68,7 +55,7 @@ export class App implements OnInit, OnDestroy {
       .subscribe((msg: EventMessage) => {
         console.log('Login success event received');
         const result = msg.payload as AuthenticationResult;
-        if (result?.account && this.authService && !this.authService.instance.getActiveAccount()) {
+        if (result?.account && !this.authService.instance.getActiveAccount()) {
           this.authService.instance.setActiveAccount(result.account);
         }
       });
@@ -117,7 +104,7 @@ export class App implements OnInit, OnDestroy {
         if (retry) {
           // Reattempt logout via redirect
           try {
-            this.authService?.logoutRedirect && (this.authService as any).logoutRedirect();
+            this.authService.logoutRedirect();
           } catch {
             // Fallback to navigating to login
             this.router.navigate(['/login']);
@@ -135,10 +122,6 @@ export class App implements OnInit, OnDestroy {
   }
 
   checkAndSetActiveAccount() {
-    if (!this.authService) {
-      return;
-    }
-
     let activeAccount = this.authService.instance.getActiveAccount();
 
     if (!activeAccount && this.authService.instance.getAllAccounts().length > 0) {

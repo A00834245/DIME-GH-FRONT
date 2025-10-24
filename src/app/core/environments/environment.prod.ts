@@ -4,8 +4,6 @@
 
 export const environment = {
   production: true,
-  // MSAL is always enabled in production
-  enableMsal: true,
   msal: {
     clientId: process.env['NG_APP_AZURE_CLIENT_ID'] || '',
     authority: `https://${process.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${process.env['NG_APP_AZURE_TENANT_NAME']}/${process.env['NG_APP_AZURE_LOGIN_USER_FLOW']}`,

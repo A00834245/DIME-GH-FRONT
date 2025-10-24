@@ -22,20 +22,15 @@ import {
   MSALGuardConfigFactory,
   MSALInterceptorConfigFactory,
 } from '@core/config/msal-config';
-import { environment } from '@core/environments/environment';
 
-/**
- * Returns MSAL providers only if MSAL is enabled in environment
- * Otherwise returns empty array to bypass authentication for development
- */
-function getMsalProviders(): Provider[] {
-  if (!environment.enableMsal) {
-    console.log('[APP CONFIG] MSAL is disabled - using bypass mode for development');
-    return [];
-  }
-
-  console.log('[APP CONFIG] MSAL is enabled - configuring authentication');
-  return [
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(routes), 
+    provideClientHydration(withEventReplay()),
+    provideHttpClient(withInterceptorsFromDi()),
+    
     // MSAL Configuration
     {
       provide: MSAL_INSTANCE, 
@@ -62,18 +57,5 @@ function getMsalProviders(): Provider[] {
     MsalService,
     MsalGuard,
     MsalBroadcastService,
-  ];
-}
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(routes), 
-    provideClientHydration(withEventReplay()),
-    provideHttpClient(withInterceptorsFromDi()),
-    
-    // Conditionally include MSAL providers
-    ...getMsalProviders(),
   ]
 };

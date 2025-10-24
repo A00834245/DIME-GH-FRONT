@@ -1,10 +1,5 @@
 import { Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
-import { bypassGuard } from '@core/guards/bypass.guard';
-import { environment } from '@core/environments/environment';
-
-// Use MsalGuard in production, bypass guard in development (when MSAL is disabled)
-const authGuard = environment.enableMsal ? [MsalGuard] : [bypassGuard];
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -18,12 +13,12 @@ export const routes: Routes = [
   },
   {
     path: 'map',
-    canActivate: authGuard,
+    canActivate: [MsalGuard],
     loadChildren: () => import('@features/map/presentation/map.routes').then(m => m.MAP_ROUTES)
   },
   {
     path: 'profile',
-    canActivate: authGuard,
+    canActivate: [MsalGuard],
     loadChildren: () => import('@features/profile/presentation/profile.routes').then(m => m.PROFILE_ROUTES)
   },
   { path: '**', redirectTo: 'login' }
