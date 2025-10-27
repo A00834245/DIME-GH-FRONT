@@ -1,0 +1,71 @@
+# Root-level gitignore
+
+# Node / Angular common
+node_modules/
+dist/
+out-tsc/
+/tmp
+/bazel-out
+
+# VS Code
+.vscode/
+.history/*
+
+# Logs
+npm-debug.log
+yarn-error.log
+libpeerconnection.log
+testem.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Environment and secrets
+# Ignore .env files with actual secrets
+.env
+DIME-WEB-APP/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Note: environment.ts and environment.prod.ts are now safe to commit
+# as they use process.env instead of hardcoded values
+ENVIRONMENT-SETUP.md
+
+# Angular cache / misc
+.angular/
+.angular/cache/
+.sass-cache/
+/connect.lock
+/coverage
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Warp workspace
+warp/
+WARP.md
+warp.md
+
+# editor config
+.editorconfig
+**/.editorconfig
+
+
+# md files
+MSAL-DEVELOPMENT-MODE.md
+MSAL-BYPASS-SUMMARY.md
+UNSAVED-CHANGES-GUIDE.md
+UNSAVED-CHANGES-TEST-EXAMPLE.md
+FOCUS-TRAP-DOCUMENTATION.md
+
+# Debug components (development only)
+src/app/debug/environment-debug.component.ts
