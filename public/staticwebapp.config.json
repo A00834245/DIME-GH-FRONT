@@ -1,0 +1,20 @@
+{
+  "routes": [
+    { "route": "/", "rewrite": "/index.csr.html" }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.csr.html",
+    "exclude": [
+      "/assets/*",
+      "/*.css",
+      "/*.js",
+      "/*.png",
+      "/*.jpg",
+      "/*.jpeg",
+      "/*.gif",
+      "/*.svg",
+      "/favicon.ico"
+    ]
+  }
+}
+

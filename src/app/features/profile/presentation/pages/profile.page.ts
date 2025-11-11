@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { UnsavedChangesService } from '@core/services/unsaved-changes.service';
-import { HeaderComponent } from '@layout/components/header/header.component';
+import { HeaderComponent } from '@layouts/components/header/header.component';
 import { BottomSheetComponent } from '@shared/components/bottom-sheet/bottom-sheet.component';
 
 @Component({
