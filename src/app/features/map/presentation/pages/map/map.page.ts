@@ -5,7 +5,7 @@ import { environment } from '@core/environments/environment';
 import { DatasetService } from '@features/map/core/services/dataset.service';
 import { AuthService } from '@core/services/auth.service';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
-import { HeaderComponent } from '@layout/components/header/header.component';
+import { HeaderComponent } from '@layouts/components/header/header.component';
 
 // Declare google as any to avoid TypeScript errors
 declare var google: any;

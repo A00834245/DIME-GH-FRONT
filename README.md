@@ -161,7 +161,7 @@ src/
 │   │   ├── login/                   # Login page and authentication flow
 │   │   ├── map/                     # Map feature with markers and filtering
 │   │   └── profile/                 # User profile feature
-│   ├── layout/                      # Layout components (header, etc.)
+│   ├── layouts/                      # Layout components (header, etc.)
 │   ├── shared/                      # Shared components and utilities
 │   ├── app.ts                       # Root application component
 │   └── app.html                     # Root template
