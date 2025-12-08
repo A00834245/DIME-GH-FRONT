@@ -5,17 +5,19 @@
 
 export const environment = {
   production: false,
+  // Temporary: enable to bypass MSAL during local development
+  authBypass: true,
   msal: {
-    clientId: process.env['NG_APP_AZURE_CLIENT_ID'] || '',
-    authority: `https://${process.env['NG_APP_AZURE_AUTHORITY']}/${process.env['NG_APP_AZURE_TENANT_NAME']}`,
-    redirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
-    postLogoutRedirectUri: process.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
-    knownAuthorities: [process.env['NG_APP_AZURE_AUTHORITY_DOMAIN'] || '']
+    clientId: import.meta.env['NG_APP_AZURE_CLIENT_ID'] || '',
+    authority: `https://${import.meta.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${import.meta.env['NG_APP_AZURE_TENANT_NAME']}`,
+    redirectUri: import.meta.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
+    postLogoutRedirectUri: import.meta.env['NG_APP_AZURE_REDIRECT_URI'] || 'http://localhost:4200',
+    knownAuthorities: [import.meta.env['NG_APP_AZURE_AUTHORITY_DOMAIN'] || '']
   },
   // Google Maps
-  googleMapsApiKey: process.env['NG_APP_GOOGLE_MAPS_API_KEY'] || '',
-  googleMapId: process.env['NG_APP_GOOGLE_MAP_ID'] || '',
-  googleDatasetId: process.env['NG_APP_GOOGLE_DATASET_ID'] || '',
-  googleStyleId: process.env['NG_APP_GOOGLE_STYLE_ID'] || '',
-  googleProjectId: process.env['NG_APP_GOOGLE_PROJECT_ID'] || ''
+  googleMapsApiKey: import.meta.env['NG_APP_GOOGLE_MAPS_API_KEY'] || '',
+  googleMapId: import.meta.env['NG_APP_GOOGLE_MAP_ID'] || '',
+  googleDatasetId: import.meta.env['NG_APP_GOOGLE_DATASET_ID'] || '',
+  googleStyleId: import.meta.env['NG_APP_GOOGLE_STYLE_ID'] || '',
+  googleProjectId: import.meta.env['NG_APP_GOOGLE_PROJECT_ID'] || ''
 };

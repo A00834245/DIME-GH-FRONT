@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { MSAL_GUARD_CONFIG, MsalGuardConfiguration, MsalService } from '@azure/msal-angular';
-import { RedirectRequest } from '@azure/msal-browser';
+import { RedirectRequest, AccountInfo } from '@azure/msal-browser';
 import { environment } from '@core/environments/environment';
 import { LoggingService } from './logging.service';
+
+const DEV_AUTH_KEY = 'devAuthUser';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -13,10 +15,18 @@ export class AuthService {
         private router: Router,
         private logging: LoggingService
     ) {
+        if (this.isBypassEnabled()) {
+            console.warn('[AUTH] Dev auth bypass ENABLED - MSAL login will be skipped');
+            const stored = this.readBypassAccountFromStorage();
+            if (stored) {
+                this.msal.instance.setActiveAccount(stored as AccountInfo);
+            }
+            return;
+        }
+
         console.log('[AUTH] MSAL enabled - AuthService constructor called');
         console.log('[AUTH] Guard config:', this.guardConfig);
-        
-        // Handle authentication state changes
+
         this.msal.handleRedirectObservable().subscribe({
             next: (result) => {
                 console.log('[AUTH] Handle redirect result:', result);
@@ -35,6 +45,13 @@ export class AuthService {
     }
 
     login(): void {
+        if (this.isBypassEnabled()) {
+            console.warn('[AUTH] Dev auth bypass login - setting mock account and navigating to /map');
+            this.activateBypassAccount();
+            this.router.navigate(['/map']);
+            return;
+        }
+
         console.log('[AUTH] Login method called');
         console.log('[AUTH] Current accounts:', this.msal.instance.getAllAccounts());
         
@@ -56,6 +73,14 @@ export class AuthService {
     }
 
     logout(): void {
+        if (this.isBypassEnabled()) {
+            console.warn('[AUTH] Dev auth bypass logout');
+            try { localStorage.removeItem(DEV_AUTH_KEY); } catch {}
+            this.msal.instance.setActiveAccount(null);
+            this.router.navigate(['/login']);
+            return;
+        }
+
         console.log('[AUTH] Logout method called');
         this.logging.logEvent('LOGOUT_INITIATED');
         // Best-effort pre-clean of client storage before redirecting to AAD logout
@@ -79,6 +104,12 @@ export class AuthService {
     }
 
     isLoggedIn(): boolean {
+        if (this.isBypassEnabled()) {
+            const loggedIn = !!this.readBypassAccountFromStorage();
+            console.log('[AUTH][BYPASS] isLoggedIn check:', loggedIn);
+            return loggedIn;
+        }
+
         const accounts = this.msal.instance.getAllAccounts();
         const loggedIn = accounts.length > 0;
         console.log('[AUTH] isLoggedIn check:', loggedIn, 'accounts:', accounts);
@@ -86,6 +117,12 @@ export class AuthService {
     }
 
     getCurrentUser() {
+        if (this.isBypassEnabled()) {
+            const acc = this.readBypassAccountFromStorage();
+            console.log('[AUTH][BYPASS] getCurrentUser:', acc);
+            return acc;
+        }
+
         const accounts = this.msal.instance.getAllAccounts();
         const user = accounts.length > 0 ? accounts[0] : null;
         console.log('[AUTH] getCurrentUser:', user);
@@ -226,5 +263,46 @@ export class AuthService {
             this.logging.logError('LOCAL_LOGOUT_CLEANUP_ERROR', e);
         }
         this.router.navigate(['/login']);
+    }
+
+    private isBypassEnabled(): boolean {
+        return !!(environment as any)['authBypass'];
+    }
+
+    private readBypassAccountFromStorage(): AccountInfo | null {
+        try {
+            const raw = localStorage.getItem(DEV_AUTH_KEY);
+            if (!raw) { return null; }
+            return JSON.parse(raw) as AccountInfo;
+        } catch {
+            return null;
+        }
+    }
+
+    private writeBypassAccountToStorage(account: AccountInfo): void {
+        try {
+            localStorage.setItem(DEV_AUTH_KEY, JSON.stringify(account));
+        } catch {}
+    }
+
+    private activateBypassAccount(): void {
+        const existing = this.readBypassAccountFromStorage();
+        const account: AccountInfo = existing || {
+            homeAccountId: 'dev-bypass-home-account-id',
+            environment: 'dev.local',
+            tenantId: 'dev-tenant',
+            username: 'dev.user@local.test',
+            localAccountId: 'dev-local-account-id',
+            name: 'Dev User',
+            idTokenClaims: {
+                name: 'Dev User',
+                preferred_username: 'dev.user@local.test',
+                emails: ['dev.user@local.test'],
+                roles: ['Developer']
+            } as any
+        };
+
+        this.writeBypassAccountToStorage(account);
+        this.msal.instance.setActiveAccount(account);
     }
 }
