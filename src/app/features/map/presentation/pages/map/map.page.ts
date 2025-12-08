@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, Inject, PLATFORM_ID, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, Inject, PLATFORM_ID, signal, computed, NgZone } from '@angular/core';
 import { isPlatformBrowser, NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '@core/environments/environment';
@@ -6,6 +6,13 @@ import { DatasetService } from '@features/map/core/services/dataset.service';
 import { AuthService } from '@core/services/auth.service';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import { HeaderComponent } from '@layouts/components/header/header.component';
+import { SlidePanelComponent, StoreData, VisitData } from '@features/map/presentation/components/slide-panel/slide-panel.component';
+import { PendingBannerComponent } from '@features/map/presentation/components/pending-banner/pending-banner.component';
+import { CommentPopupComponent } from '@features/map/presentation/components/comment-popup/comment-popup.component';
+import { NoCheckinWarningComponent } from '@features/map/presentation/components/no-checkin-warning/no-checkin-warning.component';
+import { VisitService, Visit, PendingVisit } from '@features/map/core/services/visit.service';
+import { LocationService } from '@features/map/core/services/location.service';
+import { GeofenceService } from '@features/map/core/services/geofence.service';
 
 // Declare google as any to avoid TypeScript errors
 declare var google: any;
@@ -13,7 +20,15 @@ declare var google: any;
 @Component({
   selector: 'app-map-page',
   standalone: true,
-  imports: [NgIf, NgFor, HeaderComponent],
+  imports: [
+    NgIf, 
+    NgFor, 
+    HeaderComponent, 
+    SlidePanelComponent, 
+    PendingBannerComponent,
+    CommentPopupComponent,
+    NoCheckinWarningComponent
+  ],
   template: `
     <!-- Authentication Header -->
     <app-header 
@@ -100,12 +115,53 @@ declare var google: any;
       
       <div id="map" #mapElement class="map"></div>
     </div>
+
+    <!-- Slide Panel for Store Details -->
+    <app-slide-panel
+      [isOpen]="isSlidePanelOpen()"
+      [store]="selectedStore"
+      [todayVisit]="selectedStoreVisit()"
+      (closed)="onSlidePanelClosed()"
+      (checkIn)="onCheckIn($event)"
+      (leaveComment)="onLeaveComment($event)"
+      (directionsRequested)="onDirectionsRequested($event)">
+    </app-slide-panel>
+
+    <!-- Pending Visits Banner -->
+    <app-pending-banner
+      [pendingVisits]="pendingVisitsSignal"
+      (visitSelected)="onPendingVisitSelected($event)"
+      (viewAllClicked)="onViewAllPending()">
+    </app-pending-banner>
+
+    <!-- Comment Popup -->
+    <app-comment-popup
+      [isOpen]="isCommentPopupOpen"
+      [storeId]="commentPopupStore?.id || ''"
+      [storeName]="commentPopupStore?.name || ''"
+      [visitId]="commentPopupVisitId"
+      [isVerified]="isCommentVerified"
+      [showNoVisitWarning]="false"
+      (closed)="onCommentPopupClosed()"
+      (commentSubmitted)="onCommentSubmitted($event)">
+    </app-comment-popup>
+
+    <!-- No Check-in Warning Popup -->
+    <app-no-checkin-warning
+      [isOpen]="isNoCheckinWarningOpen"
+      [storeName]="noCheckinWarningStoreName"
+      (cancel)="onNoCheckinWarningCancel()"
+      (continueWithoutVerification)="onContinueWithoutVerification()"
+      (closed)="onNoCheckinWarningClosed()">
+    </app-no-checkin-warning>
   `,
   styleUrl: './map.page.css'
 })
-export class MapPage implements AfterViewInit {
+export class MapPage implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('mapElement', { static: true }) mapElement!: ElementRef;
   @ViewChild('searchInput', { static: true }) searchInput!: ElementRef;
+  @ViewChild(SlidePanelComponent) slidePanelComponent?: SlidePanelComponent;
+  @ViewChild(CommentPopupComponent) commentPopupComponent?: CommentPopupComponent;
   
   // Authentication properties
   protected readonly userName = signal<string>('');
@@ -132,13 +188,42 @@ export class MapPage implements AfterViewInit {
   public hideButtonsWhileSearching: boolean = false;
   private searchTimeout: any;
   
+  // Slide Panel state - using signal for proper change detection
+  public isSlidePanelOpen = signal<boolean>(false);
+  public selectedStore: StoreData | null = null;
+  private readonly _selectedStoreVisit = signal<VisitData | null>(null);
+  public readonly selectedStoreVisit = computed(() => this._selectedStoreVisit());
+  
+  // Pending visits for banner
+  public pendingVisitsSignal = signal<PendingVisit[]>([]);
+  
+  // Comment Popup state
+  public isCommentPopupOpen: boolean = false;
+  public commentPopupStore: StoreData | null = null;
+  public commentPopupVisitId?: string;
+  public isCommentVerified: boolean = false;
+  
+  // No Check-in Warning state
+  public isNoCheckinWarningOpen: boolean = false;
+  public noCheckinWarningStoreName: string = '';
+  private pendingCommentStore: StoreData | null = null;
+  
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private datasetService: DatasetService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private visitService: VisitService,
+    private locationService: LocationService,
+    private geofenceService: GeofenceService,
+    private ngZone: NgZone
   ) {}
   
+  ngOnInit(): void {
+    // Initialize visit service
+    this.initializeVisitService();
+  }
+
   ngAfterViewInit(): void {
     // Load user info first
     this.loadUserInfo();
@@ -161,7 +246,231 @@ export class MapPage implements AfterViewInit {
           this.hideButtonsWhileSearching = false;
         }
       });
+      
+      // Request location permission and start tracking
+      this.locationService.requestPermissionAndStartTracking();
+      this.locationService.setMapVisible(true);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.locationService.setMapVisible(false);
+    this.locationService.stopTracking();
+  }
+
+  private async initializeVisitService(): Promise<void> {
+    try {
+      await this.visitService.initialize();
+      // Update pending visits signal from service
+      this.pendingVisitsSignal.set(this.visitService.pendingVisits());
+    } catch (error) {
+      console.error('[MapPage] Failed to initialize visit service:', error);
+    }
+  }
+
+  // ========================================
+  // SLIDE PANEL HANDLERS
+  // ========================================
+
+  openSlidePanel(storeData: StoreData): void {
+    // Run inside Angular zone to trigger change detection
+    this.ngZone.run(() => {
+      console.log('[MapPage] openSlidePanel called with:', storeData.name);
+      this.selectedStore = storeData;
+      
+      // Get visit for this store
+      const visit = this.visitService.getVisitForStoreSync(storeData.id);
+      if (visit) {
+        this._selectedStoreVisit.set({
+          id: visit.id,
+          storeId: visit.storeId,
+          userId: visit.userId,
+          visitDate: visit.visitDate,
+          checkInTimestamp: visit.checkInTimestamp,
+          commentStatus: visit.commentStatus
+        });
+      } else {
+        this._selectedStoreVisit.set(null);
+      }
+      
+      this.isSlidePanelOpen.set(true);
+      console.log('[MapPage] isSlidePanelOpen set to:', this.isSlidePanelOpen());
+      
+      // Close any open info window
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.close();
+        this.currentInfoWindow = null;
+      }
+    });
+  }
+
+  onSlidePanelClosed(): void {
+    this.isSlidePanelOpen.set(false);
+    this.selectedStore = null;
+    this._selectedStoreVisit.set(null);
+  }
+
+  async onCheckIn(store: StoreData): Promise<void> {
+    try {
+      const result = await this.visitService.createOrReuseVisit(
+        store.id,
+        store.name,
+        store.coordinates
+      );
+      
+      // Update local state
+      this._selectedStoreVisit.set({
+        id: result.visit.id,
+        storeId: result.visit.storeId,
+        userId: result.visit.userId,
+        visitDate: result.visit.visitDate,
+        checkInTimestamp: result.visit.checkInTimestamp,
+        commentStatus: result.visit.commentStatus
+      });
+      
+      // Refresh pending visits
+      await this.visitService.fetchPendingVisits();
+      this.pendingVisitsSignal.set(this.visitService.pendingVisits());
+      
+      // Update slide panel loading state
+      this.slidePanelComponent?.setLoading(false);
+      
+      console.log(`[MapPage] Check-in successful for store ${store.name}`);
+    } catch (error: any) {
+      console.error('[MapPage] Check-in failed:', error);
+      this.slidePanelComponent?.setLoading(false);
+      // TODO: Show error notification
+    }
+  }
+
+  onLeaveComment(data: { store: StoreData; visit: VisitData }): void {
+    // Close slide panel and open comment popup
+    this.isSlidePanelOpen.set(false);
+    
+    this.commentPopupStore = data.store;
+    this.commentPopupVisitId = data.visit.id;
+    this.isCommentVerified = true;
+    this.isCommentPopupOpen = true;
+  }
+
+  onDirectionsRequested(store: StoreData): void {
+    console.log(`[MapPage] Directions requested for store ${store.name}`);
+  }
+
+  // ========================================
+  // PENDING BANNER HANDLERS
+  // ========================================
+
+  onPendingVisitSelected(pendingVisit: PendingVisit): void {
+    // Find the store feature and open slide panel
+    const feature = this.allFeatures.find(f => {
+      const props = f.properties || {};
+      // Match by store ID or name
+      return props.id === pendingVisit.storeId || 
+             props.Name === pendingVisit.storeName ||
+             props.name === pendingVisit.storeName;
+    });
+    
+    if (feature) {
+      const storeData = this.featureToStoreData(feature);
+      this.openSlidePanel(storeData);
+      
+      // Center map on the store
+      const [lng, lat] = feature.geometry.coordinates;
+      this.map.setCenter({ lat, lng });
+      this.map.setZoom(16);
+    }
+  }
+
+  onViewAllPending(): void {
+    // Could navigate to a dedicated pending comments page
+    // For now, just log
+    console.log('[MapPage] View all pending clicked');
+  }
+
+  // ========================================
+  // COMMENT POPUP HANDLERS
+  // ========================================
+
+  onCommentPopupClosed(): void {
+    this.isCommentPopupOpen = false;
+    this.commentPopupStore = null;
+    this.commentPopupVisitId = undefined;
+    this.isCommentVerified = false;
+  }
+
+  async onCommentSubmitted(data: { storeId: string; text: string; visitId?: string }): Promise<void> {
+    try {
+      const result = await this.visitService.createComment(
+        data.storeId,
+        data.text,
+        data.visitId
+      );
+      
+      // Refresh pending visits
+      await this.visitService.fetchPendingVisits();
+      this.pendingVisitsSignal.set(this.visitService.pendingVisits());
+      
+      this.commentPopupComponent?.finishSubmit(true);
+      console.log(`[MapPage] Comment submitted, verified: ${result.verified}`);
+    } catch (error: any) {
+      console.error('[MapPage] Comment submission failed:', error);
+      this.commentPopupComponent?.finishSubmit(false);
+    }
+  }
+
+  // ========================================
+  // NO CHECK-IN WARNING HANDLERS
+  // ========================================
+
+  showNoCheckinWarning(store: StoreData): void {
+    this.pendingCommentStore = store;
+    this.noCheckinWarningStoreName = store.name;
+    this.isNoCheckinWarningOpen = true;
+  }
+
+  onNoCheckinWarningCancel(): void {
+    this.isNoCheckinWarningOpen = false;
+    this.pendingCommentStore = null;
+  }
+
+  onContinueWithoutVerification(): void {
+    if (this.pendingCommentStore) {
+      // Open comment popup without verification
+      this.commentPopupStore = this.pendingCommentStore;
+      this.commentPopupVisitId = undefined;
+      this.isCommentVerified = false;
+      this.isCommentPopupOpen = true;
+    }
+    
+    this.isNoCheckinWarningOpen = false;
+    this.pendingCommentStore = null;
+  }
+
+  onNoCheckinWarningClosed(): void {
+    this.isNoCheckinWarningOpen = false;
+    this.pendingCommentStore = null;
+  }
+
+  // ========================================
+  // HELPER METHODS
+  // ========================================
+
+  private featureToStoreData(feature: any): StoreData {
+    const props = feature.properties || {};
+    const [lng, lat] = feature.geometry.coordinates;
+    
+    return {
+      id: props.id || `${lat}-${lng}`,
+      name: props.Name || props.name || 'Sin nombre',
+      category: props.Category || props.category || 'Sin categoría',
+      description: props.Description,
+      phoneNumber: props['Phone Number'] || props.phone,
+      personResponsible: props['Person Responsable'],
+      hours: props.Hours,
+      address: '', // Will be populated by reverse geocoding
+      coordinates: { lat, lng }
+    };
   }
 
   // Authentication methods
@@ -415,9 +724,56 @@ export class MapPage implements AfterViewInit {
         }
       });
       
-      // Add click listener for info window
-      marker.addListener('click', () => {
-        this.showMarkerInfoWindowCentered(properties, { lat, lng }, marker);
+      // Add click listener to open slide panel
+      marker.addListener('click', async () => {
+        // Close any existing info window
+        if (this.currentInfoWindow) {
+          this.currentInfoWindow.close();
+          this.currentInfoWindow = null;
+        }
+        
+        // Create store data with empty address first (to open panel immediately)
+        const storeData: StoreData = {
+          id: properties.id || `${lat}-${lng}`,
+          name: properties.Name || properties.name || 'Sin nombre',
+          category,
+          description: properties.Description,
+          phoneNumber: properties['Phone Number'] || properties.phone,
+          personResponsible: properties['Person Responsable'],
+          hours: properties.Hours,
+          address: 'Cargando dirección...',
+          coordinates: { lat, lng }
+        };
+        
+        // Center map on marker with offset for slide panel
+        const mapBounds = this.map.getBounds();
+        if (mapBounds) {
+          const latSpan = mapBounds.getNorthEast().lat() - mapBounds.getSouthWest().lat();
+          const offsetLat = latSpan * 0.15;
+          this.map.panTo({ lat: lat + offsetLat, lng });
+        }
+        
+        // Open slide panel immediately
+        this.openSlidePanel(storeData);
+        
+        // Try to get address asynchronously (don't block panel)
+        try {
+          const address = await this.getAddressFromCoordinates({ lat, lng });
+          // Update store data with address if panel is still open for this store
+          this.ngZone.run(() => {
+            if (this.selectedStore && this.selectedStore.id === storeData.id) {
+              this.selectedStore = { ...this.selectedStore, address };
+            }
+          });
+        } catch (error) {
+          console.warn('[MapPage] Could not get address:', error);
+          // Update with fallback address
+          this.ngZone.run(() => {
+            if (this.selectedStore && this.selectedStore.id === storeData.id) {
+              this.selectedStore = { ...this.selectedStore, address: 'Dirección no disponible' };
+            }
+          });
+        }
       });
       
       // Store marker reference and organize by category
