@@ -5,6 +5,8 @@
 
 export const environment = {
   production: false,
+  // Temporary: enable to bypass MSAL during local development
+  authBypass: true,
   msal: {
     clientId: import.meta.env['NG_APP_AZURE_CLIENT_ID'] || '',
     authority: `https://${import.meta.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${import.meta.env['NG_APP_AZURE_TENANT_NAME']}`,

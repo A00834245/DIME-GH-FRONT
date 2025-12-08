@@ -4,6 +4,8 @@
 
 export const environment = {
   production: true,
+  // Must remain false in production builds
+  authBypass: false,
   msal: {
     clientId: import.meta.env['NG_APP_AZURE_CLIENT_ID'] || '',
     authority: `https://${import.meta.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${import.meta.env['NG_APP_AZURE_TENANT_NAME']}/${import.meta.env['NG_APP_AZURE_LOGIN_USER_FLOW']}`,
