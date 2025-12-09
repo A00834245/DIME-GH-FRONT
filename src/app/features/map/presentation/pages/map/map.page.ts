@@ -1316,8 +1316,31 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
         }
         @media (max-width: 600px) {
           .custom-info-window {
-            width: 80vw !important;
-            max-width: 280px !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
+            max-height: 75vh !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            margin: 0 !important;
+            border-radius: 20px 20px 0 0 !important;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 10000 !important;
+          }
+          .info-window-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 10001 !important;
+            flex-shrink: 0 !important;
+          }
+          .info-window-content {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            max-height: calc(75vh - 80px) !important;
           }
         }
         .swipe-indicator {
@@ -1334,9 +1357,9 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
           }
         }
       </style>
-      <div class="custom-info-window" id="info-window-${Date.now()}" style="position: relative; width: ${isMobile ? '80vw' : '250px'}; max-width: 280px; font-family: 'Segoe UI', sans-serif; margin: -10px -10px -15px -10px; touch-action: pan-y;">
+      <div class="custom-info-window" id="info-window-${Date.now()}" style="position: relative; width: ${isMobile ? '100vw' : '250px'}; max-width: ${isMobile ? '100vw' : '280px'}; max-height: ${isMobile ? '75vh' : 'none'}; font-family: 'Segoe UI', sans-serif; margin: ${isMobile ? '0' : '-10px -10px -15px -10px'}; touch-action: pan-y; ${isMobile ? 'border-radius: 20px 20px 0 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column;' : ''}">
         <div class="swipe-indicator"></div>
-        <div style="background: linear-gradient(135deg, ${color} 0%, ${this.lightenColor(color, 20)} 100%); color: white; padding: ${isMobile ? '14px' : '12px'} ${isMobile ? '16px' : '14px'}; position: relative; border-radius: 12px 12px 0 0; touch-action: none;">
+        <div class="info-window-header" style="background: linear-gradient(135deg, ${color} 0%, ${this.lightenColor(color, 20)} 100%); color: white; padding: ${isMobile ? '16px' : '12px'} ${isMobile ? '16px' : '14px'}; position: ${isMobile ? 'sticky' : 'relative'}; top: ${isMobile ? '0' : 'auto'}; border-radius: ${isMobile ? '20px 20px 0 0' : '12px 12px 0 0'}; touch-action: none; flex-shrink: 0; z-index: ${isMobile ? '10001' : 'auto'};">
           <button onclick="window.closeInfoWindow()" style="position: absolute; top: ${isMobile ? '8px' : '6px'}; right: ${isMobile ? '8px' : '6px'}; background: rgba(255,255,255,0.4); border: none; border-radius: 50%; width: ${isMobile ? '32px' : '24px'}; height: ${isMobile ? '32px' : '24px'}; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" 
                   onmouseover="this.style.background='rgba(255,255,255,0.6)';this.style.transform='scale(1.1)'" 
                   onmouseout="this.style.background='rgba(255,255,255,0.4)';this.style.transform='scale(1)'"
@@ -1356,7 +1379,7 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
           </div>
         </div>
         
-        <div style="padding: 10px 12px 12px; background: white; border-radius: 0 0 12px 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <div class="info-window-content" style="padding: 10px 12px 12px; background: white; border-radius: 0 0 ${isMobile ? '20px 20px' : '12px 12px'}; box-shadow: ${isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)'}; ${isMobile ? 'overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1;' : ''}">
           ${properties.Description ? `
             <p style="margin: 0 0 10px 0; font-size: 11px; color: #333; line-height: 1.4; overflow-wrap: break-word;">${properties.Description}</p>
           ` : ''}
@@ -1422,18 +1445,18 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
             Ver Direcciones
           </button>
         </div>
-        <!-- Tail/Peak pointing down to marker -->
-        <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"></div>
+        ${!isMobile ? `<!-- Tail/Peak pointing down to marker -->
+        <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"></div>` : ''}
       </div>
     `;
     
     // Create and open the info window at the marker position
     const infoWindow = new google.maps.InfoWindow({
       content: content,
-      position: coordinates,
-      maxWidth: 300,
-      disableAutoPan: false,
-      pixelOffset: new google.maps.Size(0, -30) // Offset to position above marker
+      position: isMobile ? undefined : coordinates, // On mobile, we'll position it manually
+      maxWidth: isMobile ? window.innerWidth : 300,
+      disableAutoPan: isMobile,
+      pixelOffset: isMobile ? new google.maps.Size(0, 0) : new google.maps.Size(0, -30) // Offset to position above marker
     });
     
     // Close any existing info window
@@ -1462,20 +1485,42 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
     
     infoWindow.open(this.map);
     
-    // Add swipe-to-close functionality for mobile
+    // Add swipe-to-close functionality for mobile and position at bottom
     if (isMobile) {
       // Wait for the info window to be rendered in the DOM
       setTimeout(() => {
+        // Find the info window container in the DOM
+        const infoWindowContainer = document.querySelector('.gm-style-iw-d') as HTMLElement;
         const infoWindowElement = document.querySelector('.custom-info-window') as HTMLElement;
-        if (infoWindowElement) {
+        
+        if (infoWindowContainer && infoWindowElement) {
+          // Position the info window at the bottom of the screen
+          const infoWindowParent = infoWindowContainer.parentElement?.parentElement as HTMLElement;
+          if (infoWindowParent) {
+            infoWindowParent.style.position = 'fixed';
+            infoWindowParent.style.bottom = '0';
+            infoWindowParent.style.left = '0';
+            infoWindowParent.style.right = '0';
+            infoWindowParent.style.top = 'auto';
+            infoWindowParent.style.transform = 'none';
+            infoWindowParent.style.width = '100%';
+            infoWindowParent.style.maxWidth = '100%';
+            infoWindowParent.style.zIndex = '10000';
+          }
+          
           let touchStartY = 0;
           let touchStartX = 0;
           let isDragging = false;
+          const targetElement = infoWindowParent || infoWindowElement;
           
           const handleTouchStart = (e: TouchEvent) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-            isDragging = false;
+            // Only start drag from header or swipe indicator
+            const target = e.target as HTMLElement;
+            if (target.closest('.info-window-header') || target.closest('.swipe-indicator')) {
+              touchStartY = e.touches[0].clientY;
+              touchStartX = e.touches[0].clientX;
+              isDragging = false;
+            }
           };
           
           const handleTouchMove = (e: TouchEvent) => {
@@ -1492,8 +1537,10 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
               // Only allow downward swipes
               if (deltaY > 0) {
                 // Apply visual feedback - move the window down
-                infoWindowElement.style.transform = `translateY(${Math.min(deltaY, 100)}px)`;
-                infoWindowElement.style.opacity = `${Math.max(0.3, 1 - deltaY / 200)}`;
+                if (infoWindowParent) {
+                  infoWindowParent.style.transform = `translateY(${Math.min(deltaY, 200)}px)`;
+                  infoWindowParent.style.opacity = `${Math.max(0.3, 1 - deltaY / 300)}`;
+                }
                 e.preventDefault();
               }
             }
@@ -1505,15 +1552,17 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
             const touchEndY = e.changedTouches[0].clientY;
             const deltaY = touchEndY - touchStartY;
             
-            // If swiped down more than 50px, close the window
-            if (isDragging && deltaY > 50) {
+            // If swiped down more than 80px, close the window
+            if (isDragging && deltaY > 80) {
               if (this.currentInfoWindow) {
                 this.currentInfoWindow.close();
               }
             } else {
               // Reset position if swipe wasn't far enough
-              infoWindowElement.style.transform = '';
-              infoWindowElement.style.opacity = '';
+              if (infoWindowParent) {
+                infoWindowParent.style.transform = '';
+                infoWindowParent.style.opacity = '';
+              }
             }
             
             touchStartY = 0;
@@ -1521,9 +1570,21 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
             isDragging = false;
           };
           
-          infoWindowElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-          infoWindowElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-          infoWindowElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+          // Add listeners to header and swipe indicator for drag
+          const headerElement = infoWindowElement.querySelector('.info-window-header') as HTMLElement;
+          const swipeIndicator = infoWindowElement.querySelector('.swipe-indicator') as HTMLElement;
+          
+          if (headerElement) {
+            headerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+            headerElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+            headerElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+          }
+          
+          if (swipeIndicator) {
+            swipeIndicator.addEventListener('touchstart', handleTouchStart, { passive: false });
+            swipeIndicator.addEventListener('touchmove', handleTouchMove, { passive: false });
+            swipeIndicator.addEventListener('touchend', handleTouchEnd, { passive: true });
+          }
         }
       }, 100);
     }
