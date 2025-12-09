@@ -85,6 +85,7 @@ export class DatasetService {
       
       const url = `${this.backendUrl}/api/dataset`;
       console.log('Backend URL:', url);
+      console.log('Backend base URL:', this.backendUrl);
       
       const geojson: any = await this.http.get(url).toPromise();
       console.log('Dataset fetched successfully from backend:', geojson);
@@ -97,9 +98,23 @@ export class DatasetService {
       
       return geojson;
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching dataset from backend:', error);
-      throw error;
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        statusText: error?.statusText,
+        url: error?.url,
+        backendUrl: this.backendUrl
+      });
+      
+      // Enhance error with more context
+      const enhancedError = new Error(
+        `Failed to fetch dataset from backend: ${error?.message || 'Unknown error'} (Status: ${error?.status || 'N/A'})`
+      );
+      (enhancedError as any).status = error?.status;
+      (enhancedError as any).originalError = error;
+      throw enhancedError;
     }
   }
   

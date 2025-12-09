@@ -663,16 +663,26 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
       // Setup marker clustering for better performance
       this.setupMarkerClustering();
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading markers from backend:', error);
+      
+      // Extract error details
+      const errorMessage = error?.message || 'Unknown error';
+      const errorStatus = error?.status || error?.statusCode || 'N/A';
+      const backendUrl = environment.apiBaseUrl || 'Not configured';
+      const datasetUrl = `${backendUrl}/api/dataset`;
       
       const errorInfoWindow = new google.maps.InfoWindow({
         content: `
           <div style="padding: 15px; color: #dc3545; background: #f8d7da; border-radius: 8px; border: 1px solid #f5c6cb;">
             <h3 style="margin-top: 0; color: #721c24;">❌ Backend Connection Failed</h3>
             <p style="margin-bottom: 8px;">Could not load markers from backend server.</p>
-            <p style="margin-bottom: 8px;"><strong>Backend URL:</strong></p>
-            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; color: #333;">${environment.apiBaseUrl || 'Not configured'}</code>
+            <p style="margin-bottom: 4px;"><strong>Error:</strong> ${errorMessage}</p>
+            <p style="margin-bottom: 4px;"><strong>Status:</strong> ${errorStatus}</p>
+            <p style="margin-bottom: 4px;"><strong>Backend URL:</strong></p>
+            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; color: #333; display: block; margin-bottom: 8px;">${backendUrl}</code>
+            <p style="margin-bottom: 4px;"><strong>Dataset Endpoint:</strong></p>
+            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; color: #333; display: block; margin-bottom: 8px;">${datasetUrl}</code>
             <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" 
                     style="float: right; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-top: 8px;">Close</button>
           </div>
@@ -684,7 +694,7 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
       
       setTimeout(() => {
         errorInfoWindow.close();
-      }, 15000);
+      }, 20000);
     }
   }
   
