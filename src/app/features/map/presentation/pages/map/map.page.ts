@@ -671,8 +671,8 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
           <div style="padding: 15px; color: #dc3545; background: #f8d7da; border-radius: 8px; border: 1px solid #f5c6cb;">
             <h3 style="margin-top: 0; color: #721c24;">❌ Backend Connection Failed</h3>
             <p style="margin-bottom: 8px;">Could not load markers from backend server.</p>
-            <p style="margin-bottom: 8px;"><strong>Please ensure your backend server is running:</strong></p>
-            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; color: #333;">http://localhost:3000</code>
+            <p style="margin-bottom: 8px;"><strong>Backend URL:</strong></p>
+            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; color: #333;">${environment.apiBaseUrl || 'Not configured'}</code>
             <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" 
                     style="float: right; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-top: 8px;">Close</button>
           </div>
