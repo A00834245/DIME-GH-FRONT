@@ -7,6 +7,8 @@ export const environment = {
   production: false,
   // Temporary: enable to bypass MSAL during local development
   authBypass: true,
+  // API Base URL - defaults to localhost for development
+  apiBaseUrl: import.meta.env['NG_APP_API_BASE_URL'] || 'http://localhost:3000',
   msal: {
     clientId: import.meta.env['NG_APP_AZURE_CLIENT_ID'] || '',
     authority: `https://${import.meta.env['NG_APP_AZURE_AUTHORITY_DOMAIN']}/${import.meta.env['NG_APP_AZURE_TENANT_NAME']}`,

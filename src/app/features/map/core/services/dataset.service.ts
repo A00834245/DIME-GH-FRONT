@@ -6,7 +6,7 @@ import { environment } from '@core/environments/environment';
   providedIn: 'root'
 })
 export class DatasetService {
-  private backendUrl = 'http://localhost:3000'; // TODO: Configure this in environment
+  private backendUrl = environment.apiBaseUrl;
   
   constructor(private http: HttpClient) { }
 

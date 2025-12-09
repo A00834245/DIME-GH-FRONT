@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '@core/environments/environment';
 
 export interface Visit {
   id: string;
@@ -51,7 +52,7 @@ export interface ApiResponse<T> {
   providedIn: 'root'
 })
 export class VisitService {
-  private readonly backendUrl = 'http://localhost:3000/api/v2';
+  private readonly backendUrl = `${environment.apiBaseUrl}/api/v2`;
   
   // State signals
   private readonly _todayVisits = signal<Visit[]>([]);
