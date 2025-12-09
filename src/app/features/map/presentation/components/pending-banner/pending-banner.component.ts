@@ -3,10 +3,12 @@ import {
   Input, 
   Output, 
   EventEmitter, 
-  computed, 
   signal,
   OnInit,
-  OnDestroy
+  OnDestroy,
+  OnChanges,
+  SimpleChanges,
+  WritableSignal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PendingVisit, VisitService } from '@features/map/core/services/visit.service';
@@ -22,8 +24,7 @@ import { PendingVisit, VisitService } from '@features/map/core/services/visit.se
       [class.expanded]="isExpanded"
       [class.minimized]="!isExpanded"
       role="region"
-      aria-label="Comentarios pendientes"
-      [@bannerAnimation]>
+      aria-label="Comentarios pendientes">
       
       <!-- Minimized view -->
       <div class="banner-minimized" *ngIf="!isExpanded" (click)="expand()">
@@ -70,7 +71,7 @@ import { PendingVisit, VisitService } from '@features/map/core/services/visit.se
         <div class="pending-list">
           <div 
             class="pending-item"
-            *ngFor="let visit of pendingVisits()"
+            *ngFor="let visit of getVisits()"
             (click)="onItemClick(visit)"
             role="button"
             tabindex="0"
@@ -389,8 +390,9 @@ import { PendingVisit, VisitService } from '@features/map/core/services/visit.se
     }
   `]
 })
-export class PendingBannerComponent implements OnInit, OnDestroy {
-  @Input() pendingVisits = signal<PendingVisit[]>([]);
+export class PendingBannerComponent implements OnInit, OnDestroy, OnChanges {
+  // Accept either a signal or an array as input
+  @Input() pendingVisits: WritableSignal<PendingVisit[]> | PendingVisit[] = [];
   
   @Output() visitSelected = new EventEmitter<PendingVisit>();
   @Output() viewAllClicked = new EventEmitter<void>();
@@ -398,17 +400,47 @@ export class PendingBannerComponent implements OnInit, OnDestroy {
   isExpanded = false;
   
   private refreshInterval: number | null = null;
-
-  readonly pendingCount = computed(() => this.pendingVisits().length);
-  readonly isVisible = computed(() => this.pendingCount() > 0);
+  
+  // Internal signal to manage state
+  private readonly _visits = signal<PendingVisit[]>([]);
 
   constructor(private visitService: VisitService) {}
 
+  // Computed values based on internal signal
+  pendingCount(): number {
+    return this._visits().length;
+  }
+  
+  isVisible(): boolean {
+    return this._visits().length > 0;
+  }
+  
+  // Get visits for template iteration
+  getVisits(): PendingVisit[] {
+    return this._visits();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['pendingVisits']) {
+      const value = changes['pendingVisits'].currentValue;
+      // Handle both signal and array inputs
+      if (typeof value === 'function') {
+        // It's a signal, get its value
+        this._visits.set(value());
+      } else if (Array.isArray(value)) {
+        // It's already an array
+        this._visits.set(value);
+      }
+    }
+  }
+
   ngOnInit(): void {
-    // Refresh pending visits every minute
-    this.refreshInterval = window.setInterval(() => {
-      this.visitService.fetchPendingVisits();
-    }, 60000);
+    // Refresh pending visits every minute (only in browser)
+    if (typeof window !== 'undefined') {
+      this.refreshInterval = window.setInterval(() => {
+        this.visitService.fetchPendingVisits();
+      }, 60000);
+    }
   }
 
   ngOnDestroy(): void {

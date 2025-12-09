@@ -129,7 +129,7 @@ declare var google: any;
 
     <!-- Pending Visits Banner -->
     <app-pending-banner
-      [pendingVisits]="pendingVisitsSignal"
+      [pendingVisits]="pendingVisitsSignal()"
       (visitSelected)="onPendingVisitSelected($event)"
       (viewAllClicked)="onViewAllPending()">
     </app-pending-banner>
@@ -318,14 +318,16 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
         store.coordinates
       );
       
-      // Update local state
-      this._selectedStoreVisit.set({
-        id: result.visit.id,
-        storeId: result.visit.storeId,
-        userId: result.visit.userId,
-        visitDate: result.visit.visitDate,
-        checkInTimestamp: result.visit.checkInTimestamp,
-        commentStatus: result.visit.commentStatus
+      // Update local state inside Angular zone to trigger change detection
+      this.ngZone.run(() => {
+        this._selectedStoreVisit.set({
+          id: result.visit.id,
+          storeId: result.visit.storeId,
+          userId: result.visit.userId,
+          visitDate: result.visit.visitDate,
+          checkInTimestamp: result.visit.checkInTimestamp,
+          commentStatus: result.visit.commentStatus
+        });
       });
       
       // Refresh pending visits
@@ -337,9 +339,9 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
       
       console.log(`[MapPage] Check-in successful for store ${store.name}`);
     } catch (error: any) {
-      console.error('[MapPage] Check-in failed:', error);
+      console.error('[MapPage] Check-in failed:', error.message || error);
       this.slidePanelComponent?.setLoading(false);
-      // TODO: Show error notification
+      // TODO: Show error notification to user
     }
   }
 
@@ -991,46 +993,15 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
    * Get user location and center the map
    */
   private getUserLocationAndCenter(): void {
-    if (navigator.geolocation) {
-      console.log('Requesting user location for initial center...');
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          console.log('User location obtained for centering:', userLocation);
-          
-          // Store user location
-          (window as any).userLocation = userLocation;
-          
-          // Center map on user location
-          this.map.setCenter(userLocation);
-          this.map.setZoom(14);
-          
-          // Add user location marker
-          this.addUserLocationMarker(userLocation, position.coords.accuracy);
-          
-          console.log('Map centered on user location successfully');
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          console.log('Map remains at Monterrey default');
-          
-          // Still try to get location for marker only
-          this.showUserLocationOnMap();
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
-    } else {
+    if (!navigator.geolocation) {
       console.log('Geolocation not supported by browser');
+      return;
     }
+
+    console.log('Requesting user location for initial center...');
+    
+    // Use the fallback strategy which will handle centering and marker display
+    this.requestUserLocationWithFallback();
   }
   
   /**
@@ -1087,119 +1058,147 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
   }
   
   /**
-   * Show user location on map (fallback method)
+   * Request user location with fallback strategy
+   * Tries high accuracy first, then falls back to lower accuracy if needed
    */
-  private showUserLocationOnMap(): void {
-    if (navigator.geolocation) {
-      console.log('Requesting user location...');
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          
-          console.log('User location obtained:', userLocation);
-          console.log('Accuracy:', position.coords.accuracy, 'meters');
-          
-          // Always add the user location marker, regardless of bounds
-          // Create a custom blue dot icon similar to Google Maps
-          const userIcon = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#4285F4',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 3
-          };
-          
-          // Add the user location marker
-          const userMarker = new google.maps.Marker({
-            position: userLocation,
-            map: this.map,
-            title: 'Tu ubicación actual',
-            icon: userIcon,
-            zIndex: 2000,
-            optimized: false
-          });
-          
-          // Add pulsing animation circle
-          const pulsingCircle = new google.maps.Circle({
-            strokeColor: '#4285F4',
-            strokeOpacity: 0.4,
-            strokeWeight: 1,
-            fillColor: '#4285F4',
-            fillOpacity: 0.15,
-            map: this.map,
-            center: userLocation,
-            radius: position.coords.accuracy || 100,
-            clickable: false
-          });
-          
-          // Add a smaller inner circle for better visibility
-          const innerCircle = new google.maps.Circle({
-            strokeColor: '#4285F4',
-            strokeOpacity: 0,
-            strokeWeight: 0,
-            fillColor: '#4285F4',
-            fillOpacity: 0.25,
-            map: this.map,
-            center: userLocation,
-            radius: 30,
-            clickable: false
-          });
-          
-          // Check if location is within Mexico bounds for centering decision
-          const restriction = this.map.getOptions().restriction;
-          const bounds = restriction?.latLngBounds;
-          
-          if (!bounds || 
-              (userLocation.lat >= bounds.south && 
-               userLocation.lat <= bounds.north && 
-               userLocation.lng >= bounds.west && 
-               userLocation.lng <= bounds.east)) {
-            
-            // Center map on user's location
-            this.map.setCenter(userLocation);
-            this.map.setZoom(14);
-            console.log('Map centered on user location within bounds');
-            
-          } else {
-            console.log('User location is outside Mexico bounds, but marker is still shown');
-            
-            // Optionally, you can still center on user location even if outside bounds
-            // Uncomment the following lines if you want this behavior:
-            // this.map.setCenter(userLocation);
-            // this.map.setZoom(13);
-          }
-          
-          // Store user location for potential later use
-          (window as any).userLocation = userLocation;
-          
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              console.log('User denied geolocation request');
-              break;
-            case error.POSITION_UNAVAILABLE:
-              console.log('Location information unavailable');
-              break;
-            case error.TIMEOUT:
-              console.log('Location request timed out');
-              break;
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    } else {
+  private requestUserLocationWithFallback(): void {
+    if (!navigator.geolocation) {
       console.log('Geolocation not supported by this browser');
+      return;
+    }
+
+    console.log('Requesting user location with fallback strategy...');
+    
+    // First attempt: High accuracy
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.handleUserLocationSuccess(position);
+      },
+      (error) => {
+        console.warn('High accuracy location failed, trying with lower accuracy...', error.message);
+        
+        // Fallback: Lower accuracy, longer timeout, accept cached data
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            this.handleUserLocationSuccess(position);
+          },
+          (fallbackError) => {
+            console.error('Geolocation failed after fallback:', fallbackError);
+            this.handleUserLocationError(fallbackError);
+          },
+          {
+            enableHighAccuracy: false, // Less accurate but faster
+            timeout: 20000, // 20 seconds
+            maximumAge: 300000 // Accept cached positions up to 5 minutes old
+          }
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000, // 15 seconds
+        maximumAge: 60000 // Accept cached positions up to 1 minute old
+      }
+    );
+  }
+
+  /**
+   * Handle successful user location retrieval
+   */
+  private handleUserLocationSuccess(position: GeolocationPosition): void {
+    const userLocation = {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude
+    };
+    
+    console.log('User location obtained:', userLocation);
+    console.log('Accuracy:', position.coords.accuracy, 'meters');
+    
+    // Always add the user location marker, regardless of bounds
+    // Create a custom blue dot icon similar to Google Maps
+    const userIcon = {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10,
+      fillColor: '#4285F4',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 3
+    };
+    
+    // Add the user location marker
+    const userMarker = new google.maps.Marker({
+      position: userLocation,
+      map: this.map,
+      title: 'Tu ubicación actual',
+      icon: userIcon,
+      zIndex: 2000,
+      optimized: false
+    });
+    
+    // Add pulsing animation circle
+    const pulsingCircle = new google.maps.Circle({
+      strokeColor: '#4285F4',
+      strokeOpacity: 0.4,
+      strokeWeight: 1,
+      fillColor: '#4285F4',
+      fillOpacity: 0.15,
+      map: this.map,
+      center: userLocation,
+      radius: position.coords.accuracy || 100,
+      clickable: false
+    });
+    
+    // Add a smaller inner circle for better visibility
+    const innerCircle = new google.maps.Circle({
+      strokeColor: '#4285F4',
+      strokeOpacity: 0,
+      strokeWeight: 0,
+      fillColor: '#4285F4',
+      fillOpacity: 0.25,
+      map: this.map,
+      center: userLocation,
+      radius: 30,
+      clickable: false
+    });
+    
+    // Check if location is within Mexico bounds for centering decision
+    const restriction = this.map.getOptions().restriction;
+    const bounds = restriction?.latLngBounds;
+    
+    if (!bounds || 
+        (userLocation.lat >= bounds.south && 
+         userLocation.lat <= bounds.north && 
+         userLocation.lng >= bounds.west && 
+         userLocation.lng <= bounds.east)) {
+      
+      // Center map on user's location
+      this.map.setCenter(userLocation);
+      this.map.setZoom(14);
+      console.log('Map centered on user location within bounds');
+      
+    } else {
+      console.log('User location is outside Mexico bounds, but marker is still shown');
+    }
+    
+    // Store user location for potential later use
+    (window as any).userLocation = userLocation;
+  }
+
+  /**
+   * Handle user location error
+   */
+  private handleUserLocationError(error: GeolocationPositionError): void {
+    switch(error.code) {
+      case error.PERMISSION_DENIED:
+        console.warn('User denied geolocation request');
+        break;
+      case error.POSITION_UNAVAILABLE:
+        console.warn('Location information unavailable');
+        break;
+      case error.TIMEOUT:
+        console.warn('Location request timed out - GPS may be slow or unavailable');
+        break;
+      default:
+        console.warn('Unknown geolocation error:', error.message);
     }
   }
   

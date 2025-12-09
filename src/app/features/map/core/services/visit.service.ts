@@ -115,9 +115,31 @@ export class VisitService {
       return { visit, created };
 
     } catch (error: any) {
-      const message = error.error?.error?.message || error.message || 'Error creating visit';
+      let message = 'Error creating visit';
+      
+      // Handle HTTP errors from Angular HttpClient
+      if (error.status) {
+        // If error has ApiResponse format
+        if (error.error && typeof error.error === 'object' && 'success' in error.error) {
+          const apiError = error.error as ApiResponse<any>;
+          if (!apiError.success && apiError.error) {
+            message = apiError.error.message || message;
+          }
+        } else if (error.error?.error?.message) {
+          message = error.error.error.message;
+        } else if (error.error?.message) {
+          message = error.error.message;
+        }
+      } else if (error.error?.error?.message) {
+        message = error.error.error.message;
+      } else if (error.error?.message) {
+        message = error.error.message;
+      } else if (error.message) {
+        message = error.message;
+      }
+      
       this._lastError.set(message);
-      console.error('[VisitService] Create visit error:', error);
+      console.error('[VisitService] Create visit error:', message);
       throw new Error(message);
     } finally {
       this._isLoading.set(false);

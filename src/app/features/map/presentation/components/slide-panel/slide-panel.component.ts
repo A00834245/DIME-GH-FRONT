@@ -11,11 +11,13 @@ import {
   OnDestroy,
   ElementRef,
   ViewChild,
-  HostListener
+  HostListener,
+  NgZone
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { GeofenceService, GeofenceCheckResult } from '@features/map/core/services/geofence.service';
 import { LocationService } from '@features/map/core/services/location.service';
+import { VisitService, VisitComment } from '@features/map/core/services/visit.service';
 
 export interface StoreData {
   id: string;
@@ -50,7 +52,7 @@ export type CheckInButtonState =
 @Component({
   selector: 'app-slide-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DatePipe],
   template: `
     <div 
       class="slide-panel-overlay" 
@@ -148,8 +150,8 @@ export type CheckInButtonState =
             </div>
           </div>
 
-          <!-- Distance indicator -->
-          <div class="distance-indicator" *ngIf="currentDistance() !== null">
+          <!-- Distance indicator (solo para Cliente) -->
+          <div class="distance-indicator" *ngIf="isClienteCategory() && currentDistance() !== null">
             <div class="distance-icon" [class.in-range]="isInGeofence()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
@@ -162,8 +164,8 @@ export type CheckInButtonState =
             </span>
           </div>
 
-          <!-- Check-in status message -->
-          <div class="checkin-status" *ngIf="!canCheckIn() && !hasVisitToday()">
+          <!-- Check-in status message (solo para Cliente) -->
+          <div class="checkin-status" *ngIf="isClienteCategory() && !canCheckIn() && !hasVisitToday()">
             <div class="status-message" [class.warning]="!locationConditions().allMet">
               <svg *ngIf="!locationConditions().allMet" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -173,12 +175,51 @@ export type CheckInButtonState =
               <span *ngIf="locationConditions().hasLocation && !isInGeofence()">Acércate a la tienda para hacer check-in</span>
             </div>
           </div>
+
+          <!-- Comments section (solo para Cliente) -->
+          <div class="comments-section" *ngIf="isClienteCategory()">
+            <div class="comments-header">
+              <div class="comments-title-row">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="comments-title">Comentarios</span>
+                <span class="comments-count" *ngIf="storeComments().length > 0">({{ storeComments().length }})</span>
+              </div>
+            </div>
+            
+            <div class="comments-list" *ngIf="storeComments().length > 0">
+              <div class="comment-item" *ngFor="let comment of storeComments()">
+                <div class="comment-header">
+                  <span class="comment-date">{{ comment.commentDate | date:'d MMM yyyy, h:mm a' }}</span>
+                  <span class="comment-badge" [class.verified]="comment.verified" [class.unverified]="!comment.verified">
+                    <svg *ngIf="comment.verified" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {{ comment.verified ? 'Verificado' : 'Sin verificar' }}
+                  </span>
+                </div>
+                <p class="comment-text">{{ comment.text }}</p>
+              </div>
+            </div>
+            
+            <div class="no-comments" *ngIf="storeComments().length === 0 && !isLoadingComments()">
+              <div class="no-comments-icon">💬</div>
+              <span class="no-comments-text">No hay comentarios para este cliente</span>
+            </div>
+            
+            <div class="loading-comments" *ngIf="isLoadingComments()">
+              <span class="loading-spinner"></span>
+              <span>Cargando comentarios...</span>
+            </div>
+          </div>
         </div>
 
         <!-- Action buttons -->
         <div class="panel-actions">
-          <!-- Check-in button -->
+          <!-- Check-in button (solo para Cliente) -->
           <button 
+            *ngIf="isClienteCategory()"
             class="action-button checkin-button"
             [class.enabled]="buttonState() === 'enabled'"
             [class.checked-in]="buttonState() === 'checked-in'"
@@ -260,6 +301,9 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
   // Geofence state
   private readonly _geofenceResult = signal<GeofenceCheckResult | null>(null);
   
+  // Internal signal for todayVisit to make computed() reactive
+  private readonly _todayVisit = signal<VisitData | null>(null);
+  
   // Computed values
   readonly currentDistance = computed(() => {
     const result = this._geofenceResult();
@@ -286,7 +330,7 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
   });
 
   readonly hasVisitToday = computed(() => {
-    return this.todayVisit !== null;
+    return this._todayVisit() !== null;
   });
 
   readonly buttonState = computed<CheckInButtonState>(() => {
@@ -299,9 +343,22 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
   private readonly _isLoading = signal<boolean>(false);
   private locationUpdateInterval: number | null = null;
 
+  // Comments state
+  private readonly _storeComments = signal<VisitComment[]>([]);
+  private readonly _isLoadingComments = signal<boolean>(false);
+  readonly storeComments = computed(() => this._storeComments());
+  readonly isLoadingComments = computed(() => this._isLoadingComments());
+
+  // Check if current store is a "Cliente" category
+  isClienteCategory(): boolean {
+    return this.store?.category?.toLowerCase() === 'cliente';
+  }
+
   constructor(
     private geofenceService: GeofenceService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private visitService: VisitService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -322,6 +379,27 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
 
     if (changes['store'] && this.store) {
       this.updateGeofenceCheck();
+      // Load comments if it's a Cliente
+      if (this.isClienteCategory()) {
+        this.loadStoreComments();
+      } else {
+        this._storeComments.set([]);
+      }
+    }
+
+    // Update internal signal when todayVisit input changes
+    // This makes the computed() reactive to input changes
+    if (changes['todayVisit']) {
+      this._todayVisit.set(changes['todayVisit'].currentValue);
+      
+      // If visit was just added, clear loading state
+      if (changes['todayVisit'].currentValue && !changes['todayVisit'].previousValue) {
+        this._isLoading.set(false);
+        // Refresh comments after check-in
+        if (this.store && this.isClienteCategory()) {
+          this.loadStoreComments();
+        }
+      }
     }
   }
 
@@ -348,10 +426,15 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
   private startGeofenceChecking(): void {
     this.updateGeofenceCheck();
     
-    // Update every 2 seconds while panel is open
-    this.locationUpdateInterval = window.setInterval(() => {
-      this.updateGeofenceCheck();
-    }, 2000);
+    // Run interval outside Angular zone to prevent excessive change detection
+    // Only trigger change detection when actually updating the geofence result
+    this.ngZone.runOutsideAngular(() => {
+      this.locationUpdateInterval = window.setInterval(() => {
+        this.ngZone.run(() => {
+          this.updateGeofenceCheck();
+        });
+      }, 2000);
+    });
   }
 
   private clearLocationInterval(): void {
@@ -374,6 +457,32 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
     this._geofenceResult.set(result);
   }
 
+  private async loadStoreComments(): Promise<void> {
+    if (!this.store) return;
+
+    this._isLoadingComments.set(true);
+    try {
+      const comments = await this.visitService.getCommentsForStore(this.store.id, 10);
+      this.ngZone.run(() => {
+        this._storeComments.set(comments);
+      });
+    } catch (error) {
+      console.error('[SlidePanel] Error loading comments:', error);
+      this._storeComments.set([]);
+    } finally {
+      this.ngZone.run(() => {
+        this._isLoadingComments.set(false);
+      });
+    }
+  }
+
+  // Public method to refresh comments (can be called from parent)
+  refreshComments(): void {
+    if (this.store && this.isClienteCategory()) {
+      this.loadStoreComments();
+    }
+  }
+
   close(): void {
     this.isClosing = true;
     setTimeout(() => {
@@ -390,9 +499,10 @@ export class SlidePanelComponent implements OnChanges, OnInit, OnDestroy {
   onCheckInClick(): void {
     if (this.buttonState() === 'loading') return;
 
-    if (this.buttonState() === 'checked-in' && this.store && this.todayVisit) {
+    const currentVisit = this._todayVisit();
+    if (this.buttonState() === 'checked-in' && this.store && currentVisit) {
       // Navigate to leave comment
-      this.leaveComment.emit({ store: this.store, visit: this.todayVisit });
+      this.leaveComment.emit({ store: this.store, visit: currentVisit });
       return;
     }
 

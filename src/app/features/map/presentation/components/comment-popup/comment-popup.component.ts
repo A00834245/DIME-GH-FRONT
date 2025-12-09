@@ -514,14 +514,24 @@ export class CommentPopupComponent implements OnChanges {
 
   @ViewChild('commentInput') commentInputRef?: ElementRef<HTMLTextAreaElement>;
 
-  commentText: string = '';
   isClosing: boolean = false;
   
+  // Use signal for commentText so computed() can react to changes
+  private readonly _commentText = signal<string>('');
   private readonly _isSubmitting = signal<boolean>(false);
+  
+  // Getter/setter for ngModel binding
+  get commentText(): string {
+    return this._commentText();
+  }
+  set commentText(value: string) {
+    this._commentText.set(value);
+  }
+  
   readonly isSubmitting = computed(() => this._isSubmitting());
-  readonly charCount = computed(() => this.commentText.length);
+  readonly charCount = computed(() => this._commentText().length);
   readonly canSubmit = computed(() => 
-    this.commentText.trim().length > 0 && !this._isSubmitting()
+    this._commentText().trim().length > 0 && !this._isSubmitting()
   );
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -533,7 +543,7 @@ export class CommentPopupComponent implements OnChanges {
   }
 
   private onOpen(): void {
-    this.commentText = '';
+    this._commentText.set('');
     this.isClosing = false;
     document.body.style.overflow = 'hidden';
     
@@ -568,7 +578,7 @@ export class CommentPopupComponent implements OnChanges {
     
     this.commentSubmitted.emit({
       storeId: this.storeId,
-      text: this.commentText.trim(),
+      text: this._commentText().trim(),
       visitId: this.visitId
     });
   }

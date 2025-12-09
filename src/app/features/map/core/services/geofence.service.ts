@@ -14,8 +14,8 @@ export interface GeofenceCheckResult {
 }
 
 const DEFAULT_GEOFENCE_CONFIG: GeofenceConfig = {
-  radiusMeters: 15, // Default 15 meters as per HU1 requirements
-  minAccuracyMeters: 50 // Minimum acceptable GPS accuracy
+  radiusMeters: 70, // Default 15 meters as per HU1 requirements
+  minAccuracyMeters: 99 // Minimum acceptable GPS accuracy
 };
 
 @Injectable({
