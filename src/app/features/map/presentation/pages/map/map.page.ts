@@ -1290,6 +1290,7 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
     const lng = typeof coordinates.lng === 'function' ? coordinates.lng() : coordinates.lng;
     
     // Create visually appealing info window content
+    const isMobile = window.innerWidth <= 600;
     const content = `
       <style>
         .gm-style .gm-style-iw-c {
@@ -1319,13 +1320,29 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
             max-width: 280px !important;
           }
         }
+        .swipe-indicator {
+          width: 40px;
+          height: 4px;
+          background: rgba(255,255,255,0.5);
+          border-radius: 2px;
+          margin: 6px auto;
+          transition: opacity 0.3s;
+        }
+        @media (min-width: 601px) {
+          .swipe-indicator {
+            display: none;
+          }
+        }
       </style>
-      <div class="custom-info-window" style="position: relative; width: ${window.innerWidth <= 600 ? '80vw' : '250px'}; max-width: 280px; font-family: 'Segoe UI', sans-serif; margin: -10px -10px -15px -10px;">
-        <div style="background: linear-gradient(135deg, ${color} 0%, ${this.lightenColor(color, 20)} 100%); color: white; padding: 12px 14px; position: relative; border-radius: 12px 12px 0 0;">
-          <button onclick="window.closeInfoWindow()" style="position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.3); border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; backdrop-filter: blur(10px);" 
-                  onmouseover="this.style.background='rgba(255,255,255,0.5)';this.style.transform='scale(1.1)'" 
-                  onmouseout="this.style.background='rgba(255,255,255,0.3)';this.style.transform='scale(1)'">
-            <span style="color: white; font-size: 16px; font-weight: 300; line-height: 1;">&times;</span>
+      <div class="custom-info-window" id="info-window-${Date.now()}" style="position: relative; width: ${isMobile ? '80vw' : '250px'}; max-width: 280px; font-family: 'Segoe UI', sans-serif; margin: -10px -10px -15px -10px; touch-action: pan-y;">
+        <div class="swipe-indicator"></div>
+        <div style="background: linear-gradient(135deg, ${color} 0%, ${this.lightenColor(color, 20)} 100%); color: white; padding: ${isMobile ? '14px' : '12px'} ${isMobile ? '16px' : '14px'}; position: relative; border-radius: 12px 12px 0 0; touch-action: none;">
+          <button onclick="window.closeInfoWindow()" style="position: absolute; top: ${isMobile ? '8px' : '6px'}; right: ${isMobile ? '8px' : '6px'}; background: rgba(255,255,255,0.4); border: none; border-radius: 50%; width: ${isMobile ? '32px' : '24px'}; height: ${isMobile ? '32px' : '24px'}; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" 
+                  onmouseover="this.style.background='rgba(255,255,255,0.6)';this.style.transform='scale(1.1)'" 
+                  onmouseout="this.style.background='rgba(255,255,255,0.4)';this.style.transform='scale(1)'"
+                  ontouchstart="this.style.background='rgba(255,255,255,0.6)';this.style.transform='scale(1.1)'"
+                  ontouchend="this.style.background='rgba(255,255,255,0.4)';this.style.transform='scale(1)'">
+            <span style="color: white; font-size: ${isMobile ? '20px' : '16px'}; font-weight: 300; line-height: 1;">&times;</span>
           </button>
           
           <div style="display: flex; align-items: center; gap: 8px; padding-right: 26px;">
@@ -1444,6 +1461,72 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
     });
     
     infoWindow.open(this.map);
+    
+    // Add swipe-to-close functionality for mobile
+    if (isMobile) {
+      // Wait for the info window to be rendered in the DOM
+      setTimeout(() => {
+        const infoWindowElement = document.querySelector('.custom-info-window') as HTMLElement;
+        if (infoWindowElement) {
+          let touchStartY = 0;
+          let touchStartX = 0;
+          let isDragging = false;
+          
+          const handleTouchStart = (e: TouchEvent) => {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            isDragging = false;
+          };
+          
+          const handleTouchMove = (e: TouchEvent) => {
+            if (!touchStartY || !touchStartX) return;
+            
+            const touchCurrentY = e.touches[0].clientY;
+            const touchCurrentX = e.touches[0].clientX;
+            const deltaY = touchCurrentY - touchStartY;
+            const deltaX = touchCurrentX - touchStartX;
+            
+            // Check if this is a vertical swipe (more vertical than horizontal)
+            if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+              isDragging = true;
+              // Only allow downward swipes
+              if (deltaY > 0) {
+                // Apply visual feedback - move the window down
+                infoWindowElement.style.transform = `translateY(${Math.min(deltaY, 100)}px)`;
+                infoWindowElement.style.opacity = `${Math.max(0.3, 1 - deltaY / 200)}`;
+                e.preventDefault();
+              }
+            }
+          };
+          
+          const handleTouchEnd = (e: TouchEvent) => {
+            if (!touchStartY) return;
+            
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaY = touchEndY - touchStartY;
+            
+            // If swiped down more than 50px, close the window
+            if (isDragging && deltaY > 50) {
+              if (this.currentInfoWindow) {
+                this.currentInfoWindow.close();
+              }
+            } else {
+              // Reset position if swipe wasn't far enough
+              infoWindowElement.style.transform = '';
+              infoWindowElement.style.opacity = '';
+            }
+            
+            touchStartY = 0;
+            touchStartX = 0;
+            isDragging = false;
+          };
+          
+          infoWindowElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+          infoWindowElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+          infoWindowElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
+      }, 100);
+    }
   }
   
   /**
