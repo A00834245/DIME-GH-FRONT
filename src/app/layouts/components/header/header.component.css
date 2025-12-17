@@ -22,6 +22,12 @@
   height: 100%;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .logo-container {
   display: flex;
   align-items: center;
@@ -78,6 +84,10 @@
 @media (max-width: 768px) {
   .map-header {
     height: 50px;
+  }
+
+  .header-left {
+    gap: 10px;
   }
   
   .header-content {

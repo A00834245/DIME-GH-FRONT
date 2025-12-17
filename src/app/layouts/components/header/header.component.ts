@@ -1,13 +1,18 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { HamburgerMenuComponent } from '@features/shell/presentation/components/hamburger-menu/hamburger-menu.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [HamburgerMenuComponent],
   template: `
-    <header class="map-header">
+    <header class="map-header" role="banner">
       <div class="header-content">
-        <div class="logo-container">
-          <img [src]="logoPath" alt="Logo de la empresa" class="company-logo" />
+        <div class="header-left">
+          <app-hamburger-menu></app-hamburger-menu>
+          <div class="logo-container">
+            <img [src]="logoPath" alt="Logo de la empresa" class="company-logo" />
+          </div>
         </div>
         <div class="user-info">
           <span class="welcome-text">Bienvenido, {{ userName }}</span>

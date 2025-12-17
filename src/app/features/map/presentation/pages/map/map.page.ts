@@ -694,7 +694,7 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
       
       setTimeout(() => {
         errorInfoWindow.close();
-      }, 20000);
+      }, 15000);
     }
   }
   
@@ -758,13 +758,18 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
         };
         
         // Center map on marker with offset for slide panel
-        const mapBounds = this.map.getBounds();
+        const mapHasBounds = typeof this.map?.getBounds === 'function';
+        const mapBounds = mapHasBounds ? this.map.getBounds() : null;
         if (mapBounds) {
           const latSpan = mapBounds.getNorthEast().lat() - mapBounds.getSouthWest().lat();
           const offsetLat = latSpan * 0.15;
           this.map.panTo({ lat: lat + offsetLat, lng });
+        } else {
+          this.map?.panTo?.({ lat, lng });
         }
         
+        await this.showMarkerInfoWindowCentered(properties, { lat, lng }, marker);
+
         // Open slide panel immediately
         this.openSlidePanel(storeData);
         
@@ -1095,6 +1100,7 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
           (fallbackError) => {
             console.error('Geolocation failed after fallback:', fallbackError);
             this.handleUserLocationError(fallbackError);
+            this.showUserLocationOnMap();
           },
           {
             enableHighAccuracy: false, // Less accurate but faster
@@ -1107,6 +1113,26 @@ export class MapPage implements OnInit, AfterViewInit, OnDestroy {
         enableHighAccuracy: true,
         timeout: 15000, // 15 seconds
         maximumAge: 60000 // Accept cached positions up to 1 minute old
+      }
+    );
+  }
+
+  /**
+   * Basic user location display used by legacy flows and tests
+   */
+  private showUserLocationOnMap(): void {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation not supported by this browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => this.handleUserLocationSuccess(position),
+      (error) => this.handleUserLocationError(error),
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 60000
       }
     );
   }

@@ -14,6 +14,10 @@ button, input, select, textarea {
   font-weight: 400;
 }
 
+body.menu-open {
+  overflow: hidden;
+}
+
 /* Ensure headings default to normal unless overridden */
 h1, h2, h3, h4, h5, h6 {
   font-family: "Century Gothic", CenturyGothic, "Segoe UI", Arial, sans-serif;

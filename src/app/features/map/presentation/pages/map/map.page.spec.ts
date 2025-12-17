@@ -6,11 +6,13 @@ import { MapPage } from './map.page';
 import { environment } from '@core/environments/environment';
 import { AuthService } from '@core/services/auth.service';
 import { DatasetService } from '@features/map/core/services/dataset.service';
+import { VisitService, Visit } from '@features/map/core/services/visit.service';
 
 describe('MapPage', () => {
   let authService: jasmine.SpyObj<AuthService>;
   let datasetService: jasmine.SpyObj<DatasetService>;
   let router: jasmine.SpyObj<Router>;
+  let visitService: jasmine.SpyObj<VisitService>;
 
   beforeEach(async () => {
     authService = jasmine.createSpyObj<AuthService>('AuthService', [
@@ -25,13 +27,58 @@ describe('MapPage', () => {
 
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
+    visitService = jasmine.createSpyObj<VisitService>('VisitService', [
+      'initialize',
+      'pendingVisits',
+      'getVisitForStoreSync',
+      'createOrReuseVisit',
+      'fetchPendingVisits',
+      'createComment'
+    ]);
+    visitService.initialize.and.returnValue(Promise.resolve());
+    visitService.pendingVisits.and.returnValue([]);
+    visitService.getVisitForStoreSync.and.returnValue(null);
+    const stubVisit: Visit = {
+      id: 'visit-1',
+      storeId: 'store-1',
+      storeName: 'Store Test',
+      userId: 'user-1',
+      visitDate: new Date().toISOString(),
+      checkInTimestamp: new Date().toISOString(),
+      commentStatus: 'pending',
+      coordinates: { lat: 0, lng: 0 },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    visitService.createOrReuseVisit.and.returnValue(
+      Promise.resolve({
+        visit: stubVisit,
+        created: true
+      })
+    );
+    visitService.fetchPendingVisits.and.returnValue(Promise.resolve([]));
+    const stubComment = {
+      id: 'comment-1',
+      userId: 'user-1',
+      storeId: 'store-1',
+      visitId: 'visit-1',
+      text: 'Comentario de prueba',
+      verified: true,
+      commentDate: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    visitService.createComment.and.returnValue(
+      Promise.resolve({ comment: stubComment, verified: true })
+    );
+
     await TestBed.configureTestingModule({
       imports: [MapPage],
       providers: [
         { provide: PLATFORM_ID, useValue: 'server' }, // Skip browser-only map init
         { provide: AuthService, useValue: authService },
         { provide: DatasetService, useValue: datasetService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: VisitService, useValue: visitService }
       ]
     }).compileComponents();
   });
@@ -543,7 +590,10 @@ describe('MapPage', () => {
         GeocoderStatus: { OK: 'OK' }
       }
     };
-    (component as any).map = {};
+    (component as any).map = {
+      getBounds: () => null,
+      panTo: jasmine.createSpy('panTo')
+    };
 
     // Dataset with mixed geometry types
     const geojson = {
@@ -610,7 +660,10 @@ describe('MapPage', () => {
         SymbolPath: { CIRCLE: 0 }
       }
     };
-    (component as any).map = {};
+    (component as any).map = {
+      getBounds: () => null,
+      panTo: jasmine.createSpy('panTo')
+    };
 
     const spy = spyOn(component as any, 'showMarkerInfoWindowCentered').and.stub();
 
